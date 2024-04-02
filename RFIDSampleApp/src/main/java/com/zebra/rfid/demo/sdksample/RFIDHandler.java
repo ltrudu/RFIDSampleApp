@@ -52,8 +52,6 @@ final static String TAG = "RFID_HANDLER";
     private EventHandler eventHandler;
     private Context context;
     private int MAX_POWER = 270;
-    private int DEVICE_STD_MODE = 0;
-    private int DEVICE_PREMIUM_PLUS_MODE = 1;
 
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
     // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode

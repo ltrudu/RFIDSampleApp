@@ -16,7 +16,6 @@ import com.zebra.datawedgeprofileintents.DWProfileCommandBase;
 import com.zebra.datawedgeprofileintents.DWScanReceiver;
 import com.zebra.datawedgeprofileintents.DWScannerStartScan;
 import com.zebra.rfid.api3.MEMORY_BANK;
-import com.zebra.rfid.api3.TagData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -167,7 +166,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                 }
         );
 
-        scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerCallback() {
+        scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerInterface() {
             @Override
             public void onBarcodeData(String val) {
                 BarcodeDataModel model = new BarcodeDataModel(val);

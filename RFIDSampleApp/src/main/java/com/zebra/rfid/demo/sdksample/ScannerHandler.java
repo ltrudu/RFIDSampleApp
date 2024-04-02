@@ -21,17 +21,17 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     private int scannerID;
     static MyAsyncTask cmdExecTask = null;
 
-    public interface ScannerHandlerCallback {
+    public interface ScannerHandlerInterface {
         void onBarcodeData(String val);
     }
 
-    private ScannerHandlerCallback scannerHandlerCallback;
+    private ScannerHandlerInterface scannerHandlerCallback;
 
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
     // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode
     String scannerName = "RFD40";
 
-    public ScannerHandler(Context context, ScannerHandlerCallback scannerHandlerCallback)
+    public ScannerHandler(Context context, ScannerHandlerInterface scannerHandlerCallback)
     {
         this.context = context;
         this.scannerHandlerCallback = scannerHandlerCallback;
