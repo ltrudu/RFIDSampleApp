@@ -686,15 +686,4 @@ final static String TAG = "RFID_HANDLER";
             return null;
         }
     }
-
-    interface ResponseHandlerInterface {
-        void handleTagdata(TagData[] tagData);
-
-        void handleTriggerPress(boolean pressed);
-
-        void barcodeData(String val);
-        void sendToast(String val);
-        //void handleStatusEvents(Events.StatusEventData eventData);
-    }
-
 }

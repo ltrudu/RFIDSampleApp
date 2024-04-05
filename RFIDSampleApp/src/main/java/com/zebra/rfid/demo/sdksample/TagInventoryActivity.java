@@ -26,7 +26,6 @@ import com.zebra.datawedgeprofileenums.SC_E_SCANNER_IDENTIFIER;
 import com.zebra.datawedgeprofileintents.DWProfileSetConfigSettings;
 import com.zebra.datawedgeprofileintentshelpers.CreateProfileHelper;
 import com.zebra.rfid.api3.TagData;
-import com.zebra.scannercontrol.SDKHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +36,7 @@ import java.util.HashMap;
  * We can also set antenna settings and singulation control
  * */
 
-public class MainActivity extends AppCompatActivity {
+public class TagInventoryActivity extends AppCompatActivity {
 
     public TextView statusTextViewRFID = null;
 
@@ -68,17 +67,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTagData(TagData[] tagData) {
-                MainActivity.this.handleTagdata(tagData);
+                TagInventoryActivity.this.handleTagdata(tagData);
             }
 
             @Override
             public void onMessage(String message) {
-                MainActivity.this.sendToast(message);
+                TagInventoryActivity.this.sendToast(message);
             }
 
             @Override
             public void handleTriggerPress(boolean press) {
-                MainActivity.this.handleTriggerPress(press);
+                TagInventoryActivity.this.handleTriggerPress(press);
             }
         };
 
@@ -102,8 +101,8 @@ public class MainActivity extends AppCompatActivity {
         mTagDataAdapter = new TagDataAdapter(mTagDataList, new TagDataAdapter.OnItemClickListener() {
             @Override
             public void onClickItem(int position, String epc) {
-                Toast.makeText(MainActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(MainActivity.this, TagReadUserMemoryActivity.class);
+                Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(TagInventoryActivity.this, TagReadUserMemoryActivity.class);
                 Bundle b = new Bundle();
                 b.putString("TagID", epc); //Your id
                 intent.putExtras(b); //Put your id to your next Intent
@@ -133,17 +132,17 @@ public class MainActivity extends AppCompatActivity {
         CreateProfileHelper.createProfile(this, setConfigSettings, new CreateProfileHelper.CreateProfileHelperCallback() {
             @Override
             public void onSuccess(String profileName) {
-                Log.d(MainActivity.TAG, "Profile " + profileName + " created with success.");
+                Log.d(TagInventoryActivity.TAG, "Profile " + profileName + " created with success.");
             }
 
             @Override
             public void onError(String profileName, String error, String errorMessage) {
-                Log.e(MainActivity.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
+                Log.e(TagInventoryActivity.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
             }
 
             @Override
             public void ondebugMessage(String profileName, String message) {
-                Log.v(MainActivity.TAG, message);
+                Log.v(TagInventoryActivity.TAG, message);
             }
         });
 
@@ -318,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this,val,Toast.LENGTH_SHORT).show();
+                Toast.makeText(TagInventoryActivity.this,val,Toast.LENGTH_SHORT).show();
             }
         });
 
