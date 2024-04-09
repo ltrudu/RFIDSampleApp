@@ -2,7 +2,6 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -32,14 +31,7 @@ import com.zebra.rfid.api3.TagAccess;
 import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-
-import com.zebra.scannercontrol.DCSSDKDefs;
-import com.zebra.scannercontrol.DCSScannerInfo;
-import com.zebra.scannercontrol.FirmwareUpdateEvent;
-import com.zebra.scannercontrol.IDcsSdkApiDelegate;
-import com.zebra.scannercontrol.SDKHandler;
 
 
 class RFIDHandler implements Readers.RFIDReaderEventHandler {
@@ -56,6 +48,8 @@ final static String TAG = "RFID_HANDLER";
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
     // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode
     String readerName = "RFD40";
+
+
 
     public interface RFIDHandlerInterface
     {
@@ -162,7 +156,8 @@ final static String TAG = "RFID_HANDLER";
     //  Activity life cycle behavior
     //
 
-    String onResume() {
+    String onResume(RFIDHandlerInterface connectionInterface) {
+        this.connectionInterface = connectionInterface;
         return connect();
     }
 
@@ -301,9 +296,12 @@ final static String TAG = "RFID_HANDLER";
                 if (!reader.isConnected()) {
                     // Establish connection to the RFID Reader
                     reader.connect();
-                    ConfigureReader();
 
                     if(reader.isConnected()){
+                        if(connectionInterface != null)
+                        {
+                            connectionInterface.onReaderConnected("Reader connected");
+                        }
                         return "Connected: " + reader.getHostName();
                     }
 
@@ -320,8 +318,8 @@ final static String TAG = "RFID_HANDLER";
         return "";
     }
 
-    private void ConfigureReader() {
-        Log.d(TAG, "ConfigureReader " + reader.getHostName());
+    public void ConfigureReaderForInventory() {
+        Log.d(TAG, "ConfigureReaderForInventory " + reader.getHostName());
         if (reader.isConnected()) {
             TriggerInfo triggerInfo = new TriggerInfo();
             triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
@@ -355,6 +353,43 @@ final static String TAG = "RFID_HANDLER";
                 s1_singulationControl.Action.setInventoryState(INVENTORY_STATE.INVENTORY_STATE_A);
                 s1_singulationControl.Action.setSLFlag(SL_FLAG.SL_ALL);
                 reader.Config.Antennas.setSingulationControl(1, s1_singulationControl);
+                // delete any prefilters
+                reader.Actions.PreFilters.deleteAll();
+                //
+            } catch (InvalidUsageException | OperationFailureException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void configureReaderForLocationing() {
+        if (reader.isConnected()) {
+            TriggerInfo triggerInfo = new TriggerInfo();
+            triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
+            triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
+            try {
+                // receive events from reader
+                if (eventHandler == null)
+                    eventHandler = new EventHandler();
+                reader.Events.addEventsListener(eventHandler);
+                // HH event
+                reader.Events.setHandheldEvent(true);
+                // tag event with tag data
+                reader.Events.setTagReadEvent(true);
+                reader.Events.setAttachTagDataWithReadEvent(false);
+                // set trigger mode as rfid so scanner beam will not come
+                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.RFID_MODE, false);
+                // set start and stop triggers
+                reader.Config.setStartTrigger(triggerInfo.StartTrigger);
+                reader.Config.setStopTrigger(triggerInfo.StopTrigger);
+                // power levels are index based so maximum power supported get the last one
+                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+                // set antenna configurations
+                Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
+                config.setTransmitPowerIndex(MAX_POWER);
+                config.setrfModeTableIndex(0);
+                config.setTari(0);
+                reader.Config.Antennas.setAntennaRfConfig(1, config);
                 // delete any prefilters
                 reader.Actions.PreFilters.deleteAll();
                 //
@@ -617,6 +652,29 @@ final static String TAG = "RFID_HANDLER";
             e.printStackTrace();
         } catch (OperationFailureException e) {
             e.printStackTrace();
+        }
+    }
+
+
+    synchronized void startLocationing(String tagID)
+    {
+        try {
+            reader.Actions.TagLocationing.Perform(tagID,null,null);
+        } catch (InvalidUsageException e) {
+            throw new RuntimeException(e);
+        } catch (OperationFailureException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    synchronized void stopLocationing()
+    {
+        try {
+            reader.Actions.TagLocationing.Stop();
+        } catch (InvalidUsageException e) {
+            throw new RuntimeException(e);
+        } catch (OperationFailureException e) {
+            throw new RuntimeException(e);
         }
     }
 

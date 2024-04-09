@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.List;
@@ -22,17 +23,19 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
     private List<TagDataModel> mTagData;
 
-    private final OnItemClickListener mItemClickListener;
+    private final OnItemClickListener mItemRWClickListener;
+    private final OnItemClickListener mItemLocateClickListener;
 
     public TagDataAdapter(List<TagDataModel> tagData)
     {
-        this(tagData, null);
+        this(tagData, null, null);
     }
 
-    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemCLickListener)
+    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemRWClickListener, OnItemClickListener itemLocateClickListener)
     {
         mTagData = tagData;
-        mItemClickListener = itemCLickListener;
+        mItemRWClickListener = itemRWClickListener;
+        mItemLocateClickListener = itemLocateClickListener;
     }
 
     @NonNull
@@ -45,7 +48,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         View contactView = inflater.inflate(R.layout.item_tagdata, parent, false);
 
         // Return a new holder instance
-        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemClickListener);
+        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemRWClickListener, mItemLocateClickListener);
         return viewHolder;
     }
 
@@ -85,17 +88,21 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
     // Provide a direct reference to each of the views within a data item
     // Used to cache the views within the item layout for fast access
-    public class TagDataViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class TagDataViewHolder extends RecyclerView.ViewHolder{
         // Your holder should contain a member variable
         // for any view that will be set as you render a row
         public TextView mEPC;
         public TextView mRssi;
 
-        private OnItemClickListener itemClickListener;
+        Button btRWClickListener;
+        Button btLocateClickListener;
+
+        private OnItemClickListener itemRWClickListener;
+        private OnItemClickListener itemLocateClickListener;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
-        public TagDataViewHolder(View itemView, OnItemClickListener itemClickListener) {
+        public TagDataViewHolder(View itemView, OnItemClickListener itemRWClickListener, OnItemClickListener itemLocateClickListener) {
             // Stores the itemView in a public final member variable that can be used
             // to access the context from any TagDataViewHolder instance.
             super(itemView);
@@ -103,18 +110,30 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
             mEPC = (TextView) itemView.findViewById(R.id.tv_epc);
             mRssi = (TextView) itemView.findViewById(R.id.tv_rssi);
 
-            this.itemClickListener = itemClickListener;
-            if(itemClickListener != null)
-            {
-                itemView.setOnClickListener(this);
-            }
-        }
+            btRWClickListener = (Button)itemView.findViewById(R.id.bt_read_write);
+            btLocateClickListener = (Button)itemView.findViewById(R.id.bt_locate);
 
-        @Override
-        public void onClick(View view) {
-            if(itemClickListener != null)
+            this.itemRWClickListener = itemRWClickListener;
+            this.itemLocateClickListener = itemLocateClickListener;
+
+            if(itemRWClickListener != null)
             {
-                itemClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
+                btRWClickListener.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        itemRWClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
+                    }
+                });
+            }
+
+            if(itemLocateClickListener != null)
+            {
+                btLocateClickListener.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        itemLocateClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
+                    }
+                });
             }
         }
     }

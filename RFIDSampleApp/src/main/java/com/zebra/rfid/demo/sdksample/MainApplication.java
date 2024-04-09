@@ -12,6 +12,9 @@ import com.zebra.datawedgeprofileintentshelpers.CreateProfileHelper;
 import java.util.HashMap;
 
 public class MainApplication extends Application {
+
+    final static String TAG = "RFID_SAMPLE";
+
     protected static DWProfileSetConfigSettings mSetConfigSettings;
 
     protected static RFIDHandler rfidHandler;

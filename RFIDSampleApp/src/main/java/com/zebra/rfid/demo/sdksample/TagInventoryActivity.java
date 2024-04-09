@@ -38,9 +38,8 @@ import java.util.HashMap;
 
 public class TagInventoryActivity extends AppCompatActivity {
 
-    public TextView statusTextViewRFID = null;
+    private TextView statusTextViewRFID = null;
 
-    final static String TAG = "RFID_SAMPLE";
     private static final int BLUETOOTH_PERMISSION_REQUEST_CODE = 100;
 
     TagDataAdapter mTagDataAdapter;
@@ -62,6 +61,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
             @Override
             public void onReaderConnected(String message) {
+                MainApplication.rfidHandler.ConfigureReaderForInventory();
                 statusTextViewRFID.setText(message);
             }
 
@@ -108,6 +108,16 @@ public class TagInventoryActivity extends AppCompatActivity {
                 intent.putExtras(b); //Put your id to your next Intent
                 startActivity(intent);
             }
+        }, new TagDataAdapter.OnItemClickListener() {
+            @Override
+            public void onClickItem(int position, String epc) {
+                Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(TagInventoryActivity.this, TagLocateActivity.class);
+                Bundle b = new Bundle();
+                b.putString("TagID", epc); //Your id
+                intent.putExtras(b); //Put your id to your next Intent
+                startActivity(intent);
+            }
         });
         mTagDataRecyclerView.setAdapter(mTagDataAdapter);
 
@@ -132,17 +142,17 @@ public class TagInventoryActivity extends AppCompatActivity {
         CreateProfileHelper.createProfile(this, setConfigSettings, new CreateProfileHelper.CreateProfileHelperCallback() {
             @Override
             public void onSuccess(String profileName) {
-                Log.d(TagInventoryActivity.TAG, "Profile " + profileName + " created with success.");
+                Log.d(MainApplication.TAG, "Profile " + profileName + " created with success.");
             }
 
             @Override
             public void onError(String profileName, String error, String errorMessage) {
-                Log.e(TagInventoryActivity.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
+                Log.e(MainApplication.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
             }
 
             @Override
             public void ondebugMessage(String profileName, String message) {
-                Log.v(TagInventoryActivity.TAG, message);
+                Log.v(MainApplication.TAG, message);
             }
         });
 
@@ -199,13 +209,13 @@ public class TagInventoryActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //rfidHandler.onPause();
+        MainApplication.rfidHandler.onPause();
     }
 
     @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        String result = MainApplication.rfidHandler.onResume();
+    protected void onResume() {
+        super.onResume();
+        String result = MainApplication.rfidHandler.onResume(mHandlerInterface);
         statusTextViewRFID.setText(result);
     }
 
@@ -247,8 +257,8 @@ public class TagInventoryActivity extends AppCompatActivity {
             {
                 mTagDataList.get(tagIndex).mTagID = tagData[index].getTagID();
                 mTagDataList.get(tagIndex).mRssi = tagData[index].getPeakRSSI();
-                Log.v(TAG, "TagID=" + tagData[index].getTagID());
-                Log.v(TAG, "=" + tagData[index].getMemoryBankData());
+                Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
+                Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
                 itemchanged.add(index);
             }
             else

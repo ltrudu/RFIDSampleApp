@@ -131,11 +131,11 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                     public void result(String profileName, String action, String command, String result, String resultInfo, String commandidentifier) {
                         if(result.equalsIgnoreCase("SUCCESS"))
                         {
-                            Log.v(TagInventoryActivity.TAG, "Scanner started with success for profile:" + profileName);
+                            Log.v(MainApplication.TAG, "Scanner started with success for profile:" + profileName);
                         }
                         else
                         {
-                            Log.e(TagInventoryActivity.TAG, "Error Starting Scanner on profile: " + profileName + "\n" + resultInfo);
+                            Log.e(MainApplication.TAG, "Error Starting Scanner on profile: " + profileName + "\n" + resultInfo);
                         }
                     }
 
