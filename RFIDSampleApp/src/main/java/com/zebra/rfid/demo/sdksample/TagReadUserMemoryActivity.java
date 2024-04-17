@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -68,6 +69,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(String tagID) {
                         Toast.makeText(TagReadUserMemoryActivity.this, "Data written with success for tag:" + tagID, Toast.LENGTH_LONG).show();
+                        readDataOnTag();
                     }
 
                     @Override
@@ -153,30 +155,47 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                 false,
                 new DWScanReceiver.onScannedData() {
                     @Override
-                    public void scannedData(String source, String data, String typology) {
-                        BarcodeDataModel model = new BarcodeDataModel(data);
-                        mBarcodeDataModelArrayList.add(model);
-                        rvBarcodesList.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mBarcodeDataAdapter.notifyDataSetChanged();
-                            }
-                        });
+                    public void scannedData(String source, String data, String symbo) {
+                        if(mBarcodeDataModelArrayList.size() <= 7 && symbo.equalsIgnoreCase("EAN13")) {
+                            BarcodeDataModel model = new BarcodeDataModel(data);
+                            mBarcodeDataModelArrayList.add(model);
+                            rvBarcodesList.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mBarcodeDataAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+                        else
+                        {
+                            if(Looper.myLooper() == null)
+                                Looper.prepare();
+                            Toast.makeText(TagReadUserMemoryActivity.this, "Too many barcodes.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
         );
 
         scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerInterface() {
             @Override
-            public void onBarcodeData(String val) {
-                BarcodeDataModel model = new BarcodeDataModel(val);
-                mBarcodeDataModelArrayList.add(model);
-                rvBarcodesList.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBarcodeDataAdapter.notifyDataSetChanged();
-                    }
-                });
+            public void onBarcodeData(String val, int symbo) {
+                if(mBarcodeDataModelArrayList.size() <= 7 && symbo == 11) {
+                    BarcodeDataModel model = new BarcodeDataModel(val);
+                    mBarcodeDataModelArrayList.add(model);
+                    rvBarcodesList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mBarcodeDataAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+                else
+                {
+                    if(Looper.myLooper() == null)
+                        Looper.prepare();
+                    Toast.makeText(TagReadUserMemoryActivity.this, "Too many barcodes.", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
     }

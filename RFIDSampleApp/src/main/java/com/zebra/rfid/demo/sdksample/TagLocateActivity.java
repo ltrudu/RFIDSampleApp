@@ -126,7 +126,6 @@ public class TagLocateActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        MainApplication.rfidHandler.onPause();
         super.onPause();
     }
 

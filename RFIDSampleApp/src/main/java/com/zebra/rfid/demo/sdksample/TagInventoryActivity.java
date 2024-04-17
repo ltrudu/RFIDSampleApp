@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -156,6 +157,12 @@ public class TagInventoryActivity extends AppCompatActivity {
             }
         });
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                MainApplication.rfidHandler.onPause();
+            }
+        });
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -209,7 +216,6 @@ public class TagInventoryActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        MainApplication.rfidHandler.onPause();
     }
 
     @Override
@@ -310,15 +316,16 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void handleTriggerPress(boolean pressed) {
         if (pressed) {
-            mTagDataList.clear();
                     mTagDataRecyclerView.post(new Runnable()
                     {
                         @Override
                         public void run() {
+                            mTagDataList.clear();
                             mTagDataAdapter.notifyDataSetChanged();
+                            MainApplication.rfidHandler.performInventory();
                         }
                     });
-            MainApplication.rfidHandler.performInventory();
+
         } else
             MainApplication.rfidHandler.stopInventory();
     }

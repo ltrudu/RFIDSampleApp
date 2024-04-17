@@ -22,7 +22,7 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     static MyAsyncTask cmdExecTask = null;
 
     public interface ScannerHandlerInterface {
-        void onBarcodeData(String val);
+        void onBarcodeData(String val, int symbo);
     }
 
     private ScannerHandlerInterface scannerHandlerCallback;
@@ -62,8 +62,8 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     public void dcssdkEventBarcode(byte[] barcodeData, int barcodeType, int fromScannerID) {
         String s = new String(barcodeData);
         if(scannerHandlerCallback != null)
-            scannerHandlerCallback.onBarcodeData(s);
-        Log.d(TAG,"barcaode ="+ s);
+            scannerHandlerCallback.onBarcodeData(s, barcodeType);
+        Log.d(TAG,"barcaode ="+ s + "\nSymbo=" + String.valueOf(barcodeType));
     }
 
     @Override
