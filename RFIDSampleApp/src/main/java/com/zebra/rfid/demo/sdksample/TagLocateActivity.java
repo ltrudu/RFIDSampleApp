@@ -2,6 +2,7 @@ package com.zebra.rfid.demo.sdksample;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -50,6 +51,10 @@ public class TagLocateActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_locate);
+
+        // Force portrait orientation
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
 
         rangeGraph = (RangeGraph)findViewById(R.id.rgLocationBar);
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);

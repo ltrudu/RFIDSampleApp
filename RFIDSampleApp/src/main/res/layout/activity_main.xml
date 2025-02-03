@@ -31,31 +31,65 @@
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.3"
+                android:text="Nb Items" />
+
+            <TextView
+                android:id="@+id/tvNbItems"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TextView" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/TestButton"
+                android:id="@+id/btStartInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:onClick="StartInventory"
                 android:layout_margin="5dp"
-                android:layout_below="@+id/textViewStatusrfid"
                 android:text="Start Inventory"
                 android:textSize="10sp" />
 
             <Button
-                android:id="@+id/TestButton2"
+                android:id="@+id/btStopInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:onClick="StopInventory"
                 android:layout_margin="5dp"
-                android:layout_below="@+id/textViewStatusrfid"
                 android:text="Stop Inventory"
                 android:textSize="10sp" />
 
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/ExportTXT"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="ExportTXT"
+                android:layout_margin="5dp"
+                android:text="Export TXT"
+                android:textSize="10sp" />
 
         </LinearLayout>
 

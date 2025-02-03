@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -44,6 +45,10 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_user_memory_read);
+
+        // Force portrait orientation
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
 
         Bundle b = getIntent().getExtras();
         String epc = ""; // or other values

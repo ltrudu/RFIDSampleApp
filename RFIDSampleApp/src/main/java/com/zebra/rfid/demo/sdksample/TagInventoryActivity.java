@@ -2,6 +2,7 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,7 +30,12 @@ import com.zebra.datawedgeprofileintents.DWProfileSetConfigSettings;
 import com.zebra.datawedgeprofileintentshelpers.CreateProfileHelper;
 import com.zebra.rfid.api3.TagData;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 
@@ -47,6 +54,7 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     RecyclerView mTagDataRecyclerView;
     private ArrayList<TagDataModel> mTagDataList = new ArrayList<>();
+    TextView tvNbItems;
 
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
@@ -58,9 +66,15 @@ public class TagInventoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Force portrait orientation
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         // RFID Handler
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);
         //rfidHandler.onCreate(this);
+
+        tvNbItems = findViewById(R.id.tvNbItems);
+        tvNbItems.setText("0");
 
         String model = Build.MODEL;
         if(model.equalsIgnoreCase("EM45") == false)
@@ -233,6 +247,12 @@ public class TagInventoryActivity extends AppCompatActivity {
         super.onResume();
         String result = MainApplication.rfidHandler.onResume(mHandlerInterface);
         statusTextViewRFID.setText(result);
+        findViewById(R.id.btStartInventory).setEnabled(true);
+        if(mTagDataList.size() > 0)
+            findViewById(R.id.ExportTXT).setEnabled(true);
+        else
+            findViewById(R.id.ExportTXT).setEnabled(false);
+        findViewById(R.id.btStopInventory).setEnabled(false);
     }
 
     @Override
@@ -244,13 +264,22 @@ public class TagInventoryActivity extends AppCompatActivity {
     public void StartInventory(View view)
     {
         mTagDataList.clear();
-                mTagDataRecyclerView.post(new Runnable()
-                {
-                    @Override
-                    public void run() {
-                        mTagDataAdapter.notifyDataSetChanged();
-                    }
-                });
+        mTagDataRecyclerView.post(new Runnable()
+        {
+            @Override
+            public void run() {
+                mTagDataAdapter.notifyDataSetChanged();
+            }
+        });
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tvNbItems.setText("0");
+                findViewById(R.id.btStartInventory).setEnabled(false);
+                findViewById(R.id.ExportTXT).setEnabled(false);
+                findViewById(R.id.btStopInventory).setEnabled(true);
+            }
+        });
         MainApplication.rfidHandler.performInventory();
         //   rfidHandler.MultiTag();
     }
@@ -261,6 +290,81 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void StopInventory(View view){
         MainApplication.rfidHandler.stopInventory();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.btStartInventory).setEnabled(true);
+                if(mTagDataList.size() > 0)
+                    findViewById(R.id.ExportTXT).setEnabled(true);
+                findViewById(R.id.btStopInventory).setEnabled(false);
+            }
+        });
+    }
+
+    public void ExportTXT(View view)
+    {
+        String txtToExport = "Inventory:\n";
+        for(TagDataModel model : mTagDataList)
+        {
+            txtToExport += model.mTagID + "\n";
+        }
+        String fileName = createNewFileName("data");
+        File fileToWrite = new File(getTodayFolder(), fileName + ".txt");
+        if(fileToWrite.exists())
+            fileToWrite.delete();
+
+        try {
+            // Create a FileWriter
+            FileWriter fileWriter = new FileWriter(fileToWrite);
+
+            // Write the string to the file
+            fileWriter.write(txtToExport);
+
+            // Close the FileWriter
+            fileWriter.close();
+
+            Toast.makeText(this, "File exported with success:\n" + fileName + ".txt", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getTodayDateString()
+    {
+        Date nowDate = new Date();
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyyMMdd");
+        String currentDate = sdf2.format(nowDate);
+        return currentDate;
+    }
+
+    private File getTodayFolder()
+    {
+        File targetFolder = null;
+        File dateFolder = null;
+        try {
+            targetFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), getString(R.string.app_name));
+            if (targetFolder.exists() == false) {
+                targetFolder.mkdirs();
+            }
+            dateFolder = new File(targetFolder, getTodayDateString());
+            if (dateFolder.exists() == false) {
+                dateFolder.mkdirs();
+            }
+            return dateFolder;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    public String createNewFileName(String prefix)
+    {
+        Date nowDate = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH_mm_ss");
+        String currentDateandTime = sdf.format(nowDate);
+        String newFileName = prefix + currentDateandTime;
+        return newFileName;
     }
 
     public void handleTagdata(TagData[] tagData) {
@@ -282,6 +386,12 @@ public class TagInventoryActivity extends AppCompatActivity {
                 TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
                 mTagDataList.add(newData);
                 notifyAllSetChanged = true;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvNbItems.setText(String.valueOf(mTagDataList.size()));
+                    }
+                });
             }
         }
         if(notifyAllSetChanged)
