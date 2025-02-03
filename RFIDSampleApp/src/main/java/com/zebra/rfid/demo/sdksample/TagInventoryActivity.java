@@ -50,6 +50,9 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
+    public static boolean bAllowWrite = false;
+    public static boolean bAllowLocationing = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +61,13 @@ public class TagInventoryActivity extends AppCompatActivity {
         // RFID Handler
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);
         //rfidHandler.onCreate(this);
+
+        String model = Build.MODEL;
+        if(model.equalsIgnoreCase("EM45") == false)
+        {
+            bAllowLocationing = true;
+            bAllowWrite = true;
+        }
 
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
             @Override

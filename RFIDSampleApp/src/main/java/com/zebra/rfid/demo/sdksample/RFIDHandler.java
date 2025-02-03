@@ -182,24 +182,31 @@ final static String TAG = "RFID_HANDLER";
 
     // Enumerates SDK based on host device
     private class CreateInstanceTask extends AsyncTask<Void, Void, Void> {
+        private InvalidUsageException invalidUsageException = null;
         @Override
         protected Void doInBackground(Void... voids) {
             Log.d(TAG, "CreateInstanceTask");
-            // Based on support available on host device choose the reader type
-            InvalidUsageException invalidUsageException = null;
-            readers = new Readers(context, ENUM_TRANSPORT.SERVICE_USB);
             try {
+                readers = new Readers(context, ENUM_TRANSPORT.SERVICE_USB);
                 availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+                if(availableRFIDReaderList.isEmpty()) {
+                    Log.d(TAG, "Reader not available in SERVICE_USB Transport trying with BLUETOOTH transport");
+                    readers.setTransport(ENUM_TRANSPORT.BLUETOOTH);
+                    availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+                }
+                if(availableRFIDReaderList.isEmpty()) {
+                    Log.d(TAG, "Reader not available in BLUETOOTH Transport trying with SERVICE_SERIAL transport");
+                    readers.setTransport(ENUM_TRANSPORT.SERVICE_SERIAL);
+                    availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+                }
+                if(availableRFIDReaderList.isEmpty()) {
+                    Log.d(TAG, "Reader not available in SERVICE_SERIAL Transport trying with RE_SERIAL transport");
+                    readers.setTransport(ENUM_TRANSPORT.RE_SERIAL);
+                    availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+                }
             } catch (InvalidUsageException e) {
                 invalidUsageException = e;
                 e.printStackTrace();
-            }
-            if (invalidUsageException != null || availableRFIDReaderList.size() == 0) {
-                readers.Dispose();
-                readers = null;
-                if (readers == null) {
-                    readers = new Readers(context, ENUM_TRANSPORT.BLUETOOTH);
-                }
             }
             return null;
         }
@@ -207,9 +214,27 @@ final static String TAG = "RFID_HANDLER";
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            connectReader();
+            if (invalidUsageException != null) {
+                if(connectionInterface != null)
+                {
+                    connectionInterface.onMessage("Failed to get Available Readers\n"+invalidUsageException.getInfo());
+                }
+                //context.sendToast("Failed to get Available Readers\n"+invalidUsageException.getInfo());
+                readers = null;
+            } else if (availableRFIDReaderList.isEmpty()) {
+                if(connectionInterface != null)
+                {
+                    connectionInterface.onMessage("No Available Readers to proceed");
+                }
+                //context.sendToast("No Available Readers to proceed");
+                readers = null;
+            } else {
+                connectReader();
+            }
         }
     }
+
+
 
     private synchronized void connectReader(){
         if(!isReaderConnected()){
@@ -661,9 +686,17 @@ final static String TAG = "RFID_HANDLER";
         try {
             reader.Actions.TagLocationing.Perform(tagID,null,null);
         } catch (InvalidUsageException e) {
-            throw new RuntimeException(e);
+            if(connectionInterface != null)
+            {
+                connectionInterface.onMessage(e.getMessage());
+            }
+            //throw new RuntimeException(e);
         } catch (OperationFailureException e) {
-            throw new RuntimeException(e);
+            if(connectionInterface != null)
+            {
+                connectionInterface.onMessage(e.getMessage());
+            }
+            //throw new RuntimeException(e);
         }
     }
 
@@ -672,9 +705,17 @@ final static String TAG = "RFID_HANDLER";
         try {
             reader.Actions.TagLocationing.Stop();
         } catch (InvalidUsageException e) {
-            throw new RuntimeException(e);
+            if(connectionInterface != null)
+            {
+                connectionInterface.onMessage(e.getMessage());
+            }
+            //throw new RuntimeException(e);
         } catch (OperationFailureException e) {
-            throw new RuntimeException(e);
+            if(connectionInterface != null)
+            {
+                connectionInterface.onMessage(e.getMessage());
+            }
+            //throw new RuntimeException(e);
         }
     }
 

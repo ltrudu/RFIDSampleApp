@@ -135,6 +135,14 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
                     }
                 });
             }
+
+            if(TagInventoryActivity.bAllowWrite == false)
+                btRWClickListener.setVisibility(View.GONE);
+
+            if(TagInventoryActivity.bAllowLocationing == false)
+            {
+                btLocateClickListener.setVisibility(View.GONE);
+            }
         }
     }
 }
