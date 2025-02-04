@@ -249,10 +249,14 @@ public class TagInventoryActivity extends AppCompatActivity {
         String result = MainApplication.rfidHandler.onResume(mHandlerInterface);
         statusTextViewRFID.setText(result);
         findViewById(R.id.btStartInventory).setEnabled(true);
-        if(mTagDataList.size() > 0)
+        if(mTagDataList.size() > 0) {
             findViewById(R.id.ExportTXT).setEnabled(true);
-        else
+            findViewById(R.id.btShareTo).setEnabled(true);
+        }
+        else {
             findViewById(R.id.ExportTXT).setEnabled(false);
+            findViewById(R.id.btShareTo).setEnabled(false);
+        }
         findViewById(R.id.btStopInventory).setEnabled(false);
     }
 
@@ -295,8 +299,15 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void run() {
                 findViewById(R.id.btStartInventory).setEnabled(true);
-                if(mTagDataList.size() > 0)
+                if(mTagDataList.size() > 0) {
                     findViewById(R.id.ExportTXT).setEnabled(true);
+                    findViewById(R.id.btShareTo).setEnabled(true);
+                }
+                else
+                {
+                    findViewById(R.id.ExportTXT).setEnabled(false);
+                    findViewById(R.id.btShareTo).setEnabled(false);
+                }
                 findViewById(R.id.btStopInventory).setEnabled(false);
             }
         });
@@ -378,6 +389,30 @@ public class TagInventoryActivity extends AppCompatActivity {
         String currentDateandTime = sdf.format(nowDate);
         String newFileName = prefix + currentDateandTime;
         return newFileName;
+    }
+
+    public void shareTo(View view)
+    {
+        String txtToExport = "Inventory:\n";
+        for(TagDataModel model : mTagDataList)
+        {
+            txtToExport += model.mTagID + "\n";
+        }
+        shareText(txtToExport);
+    }
+
+    private void shareText(String text) {
+        // Create an intent to share the text
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        shareIntent.setType("text/plain");
+
+        // Start the sharing chooser
+        Intent chooser = Intent.createChooser(shareIntent, "Share via");
+        if (shareIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(chooser);
+        }
     }
 
     public void handleTagdata(TagData[] tagData) {
