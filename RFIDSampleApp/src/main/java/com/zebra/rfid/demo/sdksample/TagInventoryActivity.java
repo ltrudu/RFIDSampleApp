@@ -60,7 +60,7 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
-    public static boolean bAllowWrite = true;
+    public static boolean bAllowWrite = false;
     public static boolean bAllowLocationing = true;
 
     private ConstraintLayout clQuestion;
