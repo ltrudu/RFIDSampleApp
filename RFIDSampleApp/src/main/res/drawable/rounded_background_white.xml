@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dark background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#DDDDDD" /> <!-- Dark color (adjust as needed) -->
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <!-- Blue outline -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <stroke
+                android:width="4dp"
+                android:color="@color/zebra_blue" /> <!-- Blue outline -->
+        </shape>
+    </item>
+</layer-list>

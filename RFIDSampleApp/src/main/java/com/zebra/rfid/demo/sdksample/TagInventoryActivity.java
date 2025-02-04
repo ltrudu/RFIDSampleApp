@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,8 +60,10 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
-    public static boolean bAllowWrite = false;
-    public static boolean bAllowLocationing = false;
+    public static boolean bAllowWrite = true;
+    public static boolean bAllowLocationing = true;
+
+    private ConstraintLayout clQuestion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +80,14 @@ public class TagInventoryActivity extends AppCompatActivity {
         tvNbItems = findViewById(R.id.tvNbItems);
         tvNbItems.setText("0");
 
+        clQuestion = findViewById(R.id.cl_question);
+        clQuestion.setVisibility(View.GONE);
+
         String model = Build.MODEL;
-        if(model.equalsIgnoreCase("EM45") == false)
+        if(model.equalsIgnoreCase("EM45") == true)
         {
-            bAllowLocationing = true;
-            bAllowWrite = true;
+            bAllowLocationing = false;
+            bAllowWrite = false;
         }
 
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
@@ -106,7 +113,7 @@ public class TagInventoryActivity extends AppCompatActivity {
             }
         };
 
-        //Scanner Initializations
+
         //Handling Runtime BT permissions for Android 12 and higher
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             if (ContextCompat.checkSelfPermission(this,
@@ -148,43 +155,35 @@ public class TagInventoryActivity extends AppCompatActivity {
 
         mTagDataRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-
-        DWProfileSetConfigSettings setConfigSettings = new DWProfileSetConfigSettings()
-        {{
-            mProfileName = getPackageName();
-            mTimeOutMS = 10000;
-            MainBundle.APP_LIST = new HashMap<>();
-            MainBundle.APP_LIST.put(getPackageName(), null);
-            MainBundle.CONFIG_MODE = MB_E_CONFIG_MODE.CREATE_IF_NOT_EXIST;
-            IntentPlugin.intent_action = getPackageName() + ".RECVR";
-            IntentPlugin.intent_category = "android.intent.category.DEFAULT";
-            IntentPlugin.intent_output_enabled = true;
-            IntentPlugin.intent_delivery = INT_E_DELIVERY.BROADCAST;
-            KeystrokePlugin.keystroke_output_enabled = false;
-            ScannerPlugin.scanner_selection_by_identifier = SC_E_SCANNER_IDENTIFIER.AUTO;
-            ScannerPlugin.scanner_input_enabled = true;
-        }};
-        CreateProfileHelper.createProfile(this, setConfigSettings, new CreateProfileHelper.CreateProfileHelperCallback() {
-            @Override
-            public void onSuccess(String profileName) {
-                Log.d(MainApplication.TAG, "Profile " + profileName + " created with success.");
-            }
-
-            @Override
-            public void onError(String profileName, String error, String errorMessage) {
-                Log.e(MainApplication.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
-            }
-
-            @Override
-            public void ondebugMessage(String profileName, String message) {
-                Log.v(MainApplication.TAG, message);
-            }
-        });
-
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 MainApplication.rfidHandler.onPause();
+            }
+        });
+
+        findViewById(R.id.btNo).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clQuestion.setVisibility(View.GONE);
+            }
+        });
+
+        findViewById(R.id.btYes).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String filename = ((EditText)findViewById(R.id.etFilename)).getText().toString();
+                if(filename.endsWith(".txt"))
+                {
+                    filename.replace(".txt", "");
+                }
+
+                if(filename.isEmpty())
+                {
+                    Toast.makeText(TagInventoryActivity.this, "Please enter a filename.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                writeFile(filename);
             }
         });
     }
@@ -303,12 +302,19 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void ExportTXT(View view)
     {
+        String fileName = createNewFileName("data");
+        ((EditText)findViewById(R.id.etFilename)).setText(fileName);
+        clQuestion.setVisibility(View.VISIBLE);
+  }
+
+    private void writeFile(String fileName)
+    {
         String txtToExport = "Inventory:\n";
         for(TagDataModel model : mTagDataList)
         {
             txtToExport += model.mTagID + "\n";
         }
-        String fileName = createNewFileName("data");
+
         File fileToWrite = new File(getTodayFolder(), fileName + ".txt");
         if(fileToWrite.exists())
             fileToWrite.delete();
@@ -324,9 +330,14 @@ public class TagInventoryActivity extends AppCompatActivity {
             fileWriter.close();
 
             Toast.makeText(this, "File exported with success:\n" + fileName + ".txt", Toast.LENGTH_LONG).show();
+
+            statusTextViewRFID.setText("File exported to: " + fileToWrite.getPath());
+
+            clQuestion.setVisibility(View.GONE);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private String getTodayDateString()
