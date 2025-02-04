@@ -73,6 +73,8 @@ public class TagInventoryActivity extends AppCompatActivity {
         // Force portrait orientation
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        setTitle(R.string.app_title);
+
         // RFID Handler
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);
         //rfidHandler.onCreate(this);
