@@ -175,13 +175,13 @@ final static String TAG = "RFID_HANDLER";
     private void InitSDK() {
         Log.d(TAG, "InitSDK");
         if (readers == null) {
-            new CreateInstanceTask().execute();
+            new CreateInstanceTask().executeAsync();
         } else
             connectReader();
     }
 
     // Enumerates SDK based on host device
-    private class CreateInstanceTask extends AsyncTask<Void, Void, Void> {
+    private class CreateInstanceTask extends ExecutorTask<Void, Void, Void> {
         private InvalidUsageException invalidUsageException = null;
         @Override
         protected Void doInBackground(Void... voids) {
@@ -238,11 +238,11 @@ final static String TAG = "RFID_HANDLER";
 
     private synchronized void connectReader(){
         if(!isReaderConnected()){
-            new ConnectionTask().execute();
+            new ConnectionTask().executeAsync();
         }
     }
 
-    private class ConnectionTask extends AsyncTask<Void, Void, String> {
+    private class ConnectionTask extends ExecutorTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... voids) {
             Log.d(TAG, "ConnectionTask");
