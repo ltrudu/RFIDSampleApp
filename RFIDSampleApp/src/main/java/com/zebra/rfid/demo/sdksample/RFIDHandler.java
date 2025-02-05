@@ -32,6 +32,7 @@ import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 
 class RFIDHandler implements Readers.RFIDReaderEventHandler {
@@ -368,12 +369,15 @@ final static String TAG = "RFID_HANDLER";
                 MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
+                //TODO: Check documentation
+                // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
                 // Set the singulation control
                 Antennas.SingulationControl s1_singulationControl = reader.Config.Antennas.getSingulationControl(1);
+                // TODO: Sessions are defined by the EPCglobal Gen2 (ISO 18000-6C) standard, which governs how RFID tags and readers interact.
                 s1_singulationControl.setSession(SESSION.SESSION_S0);
                 s1_singulationControl.Action.setInventoryState(INVENTORY_STATE.INVENTORY_STATE_A);
                 s1_singulationControl.Action.setSLFlag(SL_FLAG.SL_ALL);
@@ -733,7 +737,7 @@ final static String TAG = "RFID_HANDLER";
                     /* To get the RSSI value*/   //   Log.d(TAG, "RSSI value "+ myTags[index].getPeakRSSI());
 
                 }
-                new AsyncDataUpdate().execute(myTags);
+                new AsyncDataUpdate().executeAsync(myTags);
             }
         }
 
@@ -777,7 +781,7 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
-    private class AsyncDataUpdate extends AsyncTask<TagData[], Void, Void> {
+    private class AsyncDataUpdate extends ExecutorTask<TagData[], Void, Void> {
         @Override
         protected Void doInBackground(TagData[]... params) {
             if(connectionInterface != null)
