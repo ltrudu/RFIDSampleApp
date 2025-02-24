@@ -90,6 +90,7 @@ public class MainApplication extends Application {
             MainApplication.iMainApplicationCallback.onPermissionSuccess("Success");
         }
 
+        /*
         //Scanner Initializations
         DWProfileSetConfigSettings setConfigSettings = new DWProfileSetConfigSettings()
         {{
@@ -122,7 +123,7 @@ public class MainApplication extends Application {
                 Log.v(MainApplication.TAG, message);
             }
         });
-
+        */
 
     }
 }

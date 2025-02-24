@@ -38,10 +38,10 @@
             android:required="true" /-->
     </application>
 
-    <queries>
+    <!--queries>
         <package android:name="com.symbol.datawedge" />
         <package android:name="com.symbol.emdk.emdkservice" />
-    </queries>
+    </queries-->
 
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
