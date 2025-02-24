@@ -45,6 +45,7 @@ public class MainApplication extends Application {
     public void onCreate() {
         super.onCreate();
         rfidHandler = new RFIDHandler();
+        /*
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -80,6 +81,14 @@ public class MainApplication extends Application {
                 });
             }
         }, S_FAKE_DELAY); // Let's add some S_FAKE_DELAY like in music production
+        */
+
+        permissionGranted = true;
+        sErrorMessage = null;
+        if(MainApplication.iMainApplicationCallback != null)
+        {
+            MainApplication.iMainApplicationCallback.onPermissionSuccess("Success");
+        }
 
         //Scanner Initializations
         DWProfileSetConfigSettings setConfigSettings = new DWProfileSetConfigSettings()
