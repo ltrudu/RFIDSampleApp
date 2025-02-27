@@ -6,8 +6,8 @@ android {
         applicationId "com.zebra.rfid.demo.sdksample"
         minSdkVersion 30
         targetSdkVersion 34
-        versionCode 3
-        versionName "1.3"
+        versionCode 4
+        versionName "1.4"
     }
     buildTypes {
         release {
