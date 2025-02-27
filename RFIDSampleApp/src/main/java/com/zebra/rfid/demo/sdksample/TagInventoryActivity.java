@@ -338,7 +338,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         for(TagDataModel model : mTagDataList)
         {
             String formatedDate = sdf.format(model.mTimeStamp);
-            txtToExport += formatedDate + " " + model.mTagID + "\n";
+            txtToExport += formatedDate + " " + model.mTagID + " " + model.mRssi + "\n";
         }
 
         File fileToWrite = new File(getTodayFolder(), fileName + ".txt");
