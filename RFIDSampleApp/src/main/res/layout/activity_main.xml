@@ -87,7 +87,8 @@
                 android:onClick="ExportTXT"
                 android:layout_margin="5dp"
                 android:text="Export TXT"
-                android:textSize="10sp" />
+                android:textSize="10sp"
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/btShareTo"
