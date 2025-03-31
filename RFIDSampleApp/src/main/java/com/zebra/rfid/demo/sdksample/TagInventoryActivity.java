@@ -60,7 +60,6 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
-    public static boolean bAllowWrite = false;
     public static boolean bAllowLocationing = true;
 
     private ConstraintLayout clQuestion;
@@ -89,7 +88,6 @@ public class TagInventoryActivity extends AppCompatActivity {
         if(model.equalsIgnoreCase("EM45") == true)
         {
             bAllowLocationing = false;
-            bAllowWrite = false;
         }
 
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
@@ -136,16 +134,6 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void onClickItem(int position, String epc) {
                 Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(TagInventoryActivity.this, TagReadUserMemoryActivity.class);
-                Bundle b = new Bundle();
-                b.putString("TagID", epc); //Your id
-                intent.putExtras(b); //Put your id to your next Intent
-                startActivity(intent);
-            }
-        }, new TagDataAdapter.OnItemClickListener() {
-            @Override
-            public void onClickItem(int position, String epc) {
-                Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(TagInventoryActivity.this, TagLocateActivity.class);
                 Bundle b = new Bundle();
                 b.putString("TagID", epc); //Your id
@@ -161,20 +149,6 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 MainApplication.rfidHandler.onPause();
-            }
-        });
-
-        findViewById(R.id.btStartInventory).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                StartInventory();
-            }
-        });
-
-        findViewById(R.id.btStopInventory).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                StopInventory();
             }
         });
 
@@ -200,6 +174,28 @@ public class TagInventoryActivity extends AppCompatActivity {
                     return;
                 }
                 writeFile(filename);
+            }
+        });
+
+        findViewById(R.id.btStartInventory).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                StartInventory();
+            }
+        });
+
+        findViewById(R.id.btStopInventory).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                StopInventory();
+            }
+        });
+
+        findViewById(R.id.btScanActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(TagInventoryActivity.this, ScannerActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -254,6 +250,7 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        MainApplication.rfidHandler.onPause();
         super.onPause();
     }
 
@@ -300,8 +297,10 @@ public class TagInventoryActivity extends AppCompatActivity {
             }
         });
         MainApplication.rfidHandler.performInventory();
-        //   rfidHandler.MultiTag();
     }
+
+
+
 
 
     public void StopInventory(){
@@ -333,12 +332,10 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     private void writeFile(String fileName)
     {
-        String txtToExport = ""; //""Inventory:\n";
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String txtToExport = "Inventory:\n";
         for(TagDataModel model : mTagDataList)
         {
-            String formatedDate = sdf.format(model.mTimeStamp);
-            txtToExport += formatedDate + " " + model.mTagID + " " + model.mRssi + "\n";
+            txtToExport += model.mTagID + "\n";
         }
 
         File fileToWrite = new File(getTodayFolder(), fileName + ".txt");
@@ -444,8 +441,7 @@ public class TagInventoryActivity extends AppCompatActivity {
             }
             else
             {
-                Date currentDate = new Date();
-                TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI(), currentDate);
+                TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
                 mTagDataList.add(newData);
                 notifyAllSetChanged = true;
                 runOnUiThread(new Runnable() {

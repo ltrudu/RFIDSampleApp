@@ -57,8 +57,8 @@
                 android:id="@+id/btStartInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_margin="5dp"
+                android:layout_weight="1"
                 android:text="Start Inventory"
                 android:textSize="10sp" />
 
@@ -66,8 +66,8 @@
                 android:id="@+id/btStopInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_margin="5dp"
+                android:layout_weight="1"
                 android:text="Stop Inventory"
                 android:textSize="10sp" />
 
@@ -83,12 +83,12 @@
                 android:id="@+id/ExportTXT"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:onClick="ExportTXT"
-                android:layout_margin="5dp"
                 android:text="Export TXT"
                 android:textSize="10sp"
-                android:visibility="gone"/>
+                android:visibility="visible" />
 
             <Button
                 android:id="@+id/btShareTo"
@@ -101,6 +101,15 @@
                 android:text="Share To" />
 
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btScanActivity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:textSize="10sp"
+            android:text="Scan Activity"
+        />
 
     </LinearLayout>
 
@@ -197,7 +206,7 @@
                         android:layout_marginRight="10dp"
                         android:layout_weight="1"
                         android:backgroundTint="@color/zebra_blue"
-                        android:text="Oui" />
+                        android:text="Save" />
 
                     <Button
                         android:id="@+id/btNo"
@@ -207,7 +216,7 @@
                         android:layout_marginRight="10dp"
                         android:layout_weight="1"
                         android:backgroundTint="@color/zebra_blue"
-                        android:text="Non" />
+                        android:text="Cancel" />
                 </LinearLayout>
 
 

@@ -1,6 +1,7 @@
 package com.zebra.rfid.demo.sdksample;
 
 import android.app.Application;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -21,7 +22,7 @@ public class MainApplication extends Application {
 
     final static String TAG = "RFID_SAMPLE";
 
-    protected static DWProfileSetConfigSettings mSetConfigSettings;
+    //protected static DWProfileSetConfigSettings mSetConfigSettings;
 
     protected static RFIDHandler rfidHandler;
 
@@ -45,49 +46,52 @@ public class MainApplication extends Application {
     public void onCreate() {
         super.onCreate();
         rfidHandler = new RFIDHandler();
-        /*
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                CriticalPermissionsHelper.grantPermission(MainApplication.this, EPermissionType.MANAGE_EXTERNAL_STORAGE, new IResultCallbacks() {
-                    @Override
-                    public void onSuccess(String message, String resultXML) {
-                        permissionGranted = true;
-                        sErrorMessage = null;
-                        if(MainApplication.iMainApplicationCallback != null)
-                        {
-                            MainApplication.iMainApplicationCallback.onPermissionSuccess(message);
+        String manufacturer = Build.MANUFACTURER;
+        if(manufacturer.contains("Zebra")) {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    CriticalPermissionsHelper.grantPermission(MainApplication.this, EPermissionType.MANAGE_EXTERNAL_STORAGE, new IResultCallbacks() {
+                        @Override
+                        public void onSuccess(String message, String resultXML) {
+                            permissionGranted = true;
+                            sErrorMessage = null;
+                            if(MainApplication.iMainApplicationCallback != null)
+                            {
+                                MainApplication.iMainApplicationCallback.onPermissionSuccess(message);
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onError(String message, String resultXML) {
-                        Toast.makeText(MainApplication.this, message, Toast.LENGTH_LONG).show();
-                        permissionGranted = true;
-                        sErrorMessage = message;
-                        if(MainApplication.iMainApplicationCallback != null)
-                        {
-                            MainApplication.iMainApplicationCallback.onPermissionError(message);
+                        @Override
+                        public void onError(String message, String resultXML) {
+                            Toast.makeText(MainApplication.this, message, Toast.LENGTH_LONG).show();
+                            permissionGranted = true;
+                            sErrorMessage = message;
+                            if(MainApplication.iMainApplicationCallback != null)
+                            {
+                                MainApplication.iMainApplicationCallback.onPermissionError(message);
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onDebugStatus(String message) {
-                        if(MainApplication.iMainApplicationCallback != null)
-                        {
-                            MainApplication.iMainApplicationCallback.onPermissionDebug(message);
+                        @Override
+                        public void onDebugStatus(String message) {
+                            if(MainApplication.iMainApplicationCallback != null)
+                            {
+                                MainApplication.iMainApplicationCallback.onPermissionDebug(message);
+                            }
                         }
-                    }
-                });
+                    });
+                }
+            }, S_FAKE_DELAY); // Let's add some S_FAKE_DELAY like in music production
+
+        }
+        else {
+            // Do nothing, handle the permission requests in the splash activity
+            permissionGranted = true;
+            sErrorMessage = null;
+            if (MainApplication.iMainApplicationCallback != null) {
+                MainApplication.iMainApplicationCallback.onPermissionSuccess("Success");
             }
-        }, S_FAKE_DELAY); // Let's add some S_FAKE_DELAY like in music production
-        */
-
-        permissionGranted = true;
-        sErrorMessage = null;
-        if(MainApplication.iMainApplicationCallback != null)
-        {
-            MainApplication.iMainApplicationCallback.onPermissionSuccess("Success");
         }
 
         /*

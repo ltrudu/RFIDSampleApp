@@ -344,6 +344,32 @@ final static String TAG = "RFID_HANDLER";
         return "";
     }
 
+    public void ConfigureReaderForScanning()
+    {
+        Log.d(TAG, "ConfigureReaderForScanning " + reader.getHostName());
+        if (reader.isConnected()) {
+            TriggerInfo triggerInfo = new TriggerInfo();
+            triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
+            triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
+            try {
+                // receive events from reader
+                if (eventHandler == null)
+                    eventHandler = new EventHandler();
+                reader.Events.addEventsListener(eventHandler);
+
+                // set trigger mode as rfid so scanner beam will not come
+                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.BARCODE_MODE, true);
+                // set start and stop triggers
+                reader.Config.setStartTrigger(triggerInfo.StartTrigger);
+                reader.Config.setStopTrigger(triggerInfo.StopTrigger);
+
+            } catch (InvalidUsageException | OperationFailureException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
     public void ConfigureReaderForInventory() {
         Log.d(TAG, "ConfigureReaderForInventory " + reader.getHostName());
         if (reader.isConnected()) {

@@ -1,6 +1,5 @@
 package com.zebra.rfid.demo.sdksample;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TagDataModel {
@@ -13,13 +12,10 @@ public class TagDataModel {
 
     protected int mUniqueID;
 
-    protected Date mTimeStamp;
-
-    public TagDataModel(String tagID, short rssi, Date timeStamp)
+    public TagDataModel(String tagID, short rssi)
     {
         mTagID = tagID;
         mRssi = rssi;
-        mTimeStamp = timeStamp;
         mUniqueID = atomicInteger.incrementAndGet();
     }
 

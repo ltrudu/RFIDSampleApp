@@ -23,18 +23,16 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
     private List<TagDataModel> mTagData;
 
-    private final OnItemClickListener mItemRWClickListener;
     private final OnItemClickListener mItemLocateClickListener;
 
     public TagDataAdapter(List<TagDataModel> tagData)
     {
-        this(tagData, null, null);
+        this(tagData, null);
     }
 
-    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemRWClickListener, OnItemClickListener itemLocateClickListener)
+    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemLocateClickListener)
     {
         mTagData = tagData;
-        mItemRWClickListener = itemRWClickListener;
         mItemLocateClickListener = itemLocateClickListener;
     }
 
@@ -48,7 +46,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         View contactView = inflater.inflate(R.layout.item_tagdata, parent, false);
 
         // Return a new holder instance
-        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemRWClickListener, mItemLocateClickListener);
+        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemLocateClickListener);
         return viewHolder;
     }
 
@@ -94,15 +92,13 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         public TextView mEPC;
         public TextView mRssi;
 
-        Button btRWClickListener;
         Button btLocateClickListener;
 
-        private OnItemClickListener itemRWClickListener;
         private OnItemClickListener itemLocateClickListener;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
-        public TagDataViewHolder(View itemView, OnItemClickListener itemRWClickListener, OnItemClickListener itemLocateClickListener) {
+        public TagDataViewHolder(View itemView, OnItemClickListener itemLocateClickListener) {
             // Stores the itemView in a public final member variable that can be used
             // to access the context from any TagDataViewHolder instance.
             super(itemView);
@@ -110,21 +106,9 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
             mEPC = (TextView) itemView.findViewById(R.id.tv_epc);
             mRssi = (TextView) itemView.findViewById(R.id.tv_rssi);
 
-            btRWClickListener = (Button)itemView.findViewById(R.id.bt_read_write);
             btLocateClickListener = (Button)itemView.findViewById(R.id.bt_locate);
 
-            this.itemRWClickListener = itemRWClickListener;
             this.itemLocateClickListener = itemLocateClickListener;
-
-            if(itemRWClickListener != null)
-            {
-                btRWClickListener.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        itemRWClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
-                    }
-                });
-            }
 
             if(itemLocateClickListener != null)
             {
@@ -135,9 +119,6 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
                     }
                 });
             }
-
-            if(TagInventoryActivity.bAllowWrite == false)
-                btRWClickListener.setVisibility(View.GONE);
 
             if(TagInventoryActivity.bAllowLocationing == false)
             {

@@ -17,7 +17,6 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     final static String TAG = "SCAN_HANDLER";
     private Context context;
     private SDKHandler sdkHandler;
-    private ArrayList<DCSScannerInfo> scannerList;
     private int scannerID;
     static MyAsyncTask cmdExecTask = null;
 
@@ -27,15 +26,10 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
     private ScannerHandlerInterface scannerHandlerCallback;
 
-    // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
-    // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode
-    String scannerName = "RFD40";
-
     public ScannerHandler(Context context, ScannerHandlerInterface scannerHandlerCallback)
     {
         this.context = context;
         this.scannerHandlerCallback = scannerHandlerCallback;
-        scannerList = new ArrayList<>();
     }
 
     @Override
@@ -134,13 +128,15 @@ class ScannerHandler implements IDcsSdkApiDelegate {
             ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
             availableScanners  = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
 
-            scannerList.clear();
-            if (availableScanners != null)
+            if (availableScanners != null && availableScanners.size() > 0)
             {
-                for (DCSScannerInfo scanner : availableScanners)
+                try
                 {
-
-                    scannerList.add(scanner);
+                    scannerID= availableScanners.get(0).getScannerID();
+                    sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
             else
@@ -148,20 +144,6 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
         }
 
-        for (DCSScannerInfo device : scannerList)
-        {
-            if (device.getScannerName().contains(scannerName))
-            {
-                try
-                {
-                    sdkHandler.dcssdkEstablishCommunicationSession(device.getScannerID());
-                    scannerID= device.getScannerID();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     private synchronized void disconnect() {
@@ -169,7 +151,6 @@ class ScannerHandler implements IDcsSdkApiDelegate {
         try {
                 if (sdkHandler != null) {
                     sdkHandler.dcssdkTerminateCommunicationSession(scannerID);
-                    scannerList = null;
                 }
                 //reader = null;
         } catch (Exception e) {
@@ -178,9 +159,16 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     }
 
 
-    public void scanCode(){
+    public void pullTrigger(){
         String in_xml = "<inArgs><scannerID>" + scannerID+ "</scannerID></inArgs>";
         cmdExecTask = new MyAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_PULL_TRIGGER, null);
+        cmdExecTask.execute(new String[]{in_xml});
+    }
+
+    public void releaseTrigger()
+    {
+        String in_xml = "<inArgs><scannerID>" + scannerID+ "</scannerID></inArgs>";
+        cmdExecTask = new MyAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_RELEASE_TRIGGER, null);
         cmdExecTask.execute(new String[]{in_xml});
     }
 

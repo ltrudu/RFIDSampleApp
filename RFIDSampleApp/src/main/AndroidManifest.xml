@@ -12,15 +12,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppTheme">
         <activity
-            android:name=".TagLocateActivity"
-            android:exported="false"
-            />
+            android:name=".ScannerActivity"
+            android:exported="false" />
         <activity
-            android:name=".TagReadUserMemoryActivity"
+            android:name=".TagLocateActivity"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,27 +29,24 @@
         <activity
             android:name=".TagInventoryActivity"
             android:exported="true"
-            android:label="@string/app_name">
-        </activity>
-        <!--uses-library
+            android:label="@string/app_name"></activity>
+
+        <uses-library
             android:name="com.symbol.emdk"
-            android:required="true" /-->
+            android:required="false" />
     </application>
 
-    <!--queries>
+    <queries>
         <package android:name="com.symbol.datawedge" />
         <package android:name="com.symbol.emdk.emdkservice" />
-    </queries-->
-
+    </queries>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
-    <!--uses-permission android:name="com.symbol.emdk.permission.EMDK" /-->
-
-    <!--uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" /-->
+    <uses-permission android:name="com.symbol.emdk.permission.EMDK" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <uses-permission android:name="com.symbol.datawedge.permission.contentprovider" />
 

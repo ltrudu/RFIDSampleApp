@@ -2,9 +2,13 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -32,60 +36,77 @@ public class SplashActivity extends AppCompatActivity {
 
         tvStatus = findViewById(R.id.tvStatus);
         tvLoading = findViewById(R.id.tvLoading);
-        if (MainApplication.permissionGranted == false) {
-            setTitle(R.string.app_title);
-            startPointsAnimations(getString(R.string.app_title), getString(R.string.loading_status));
-            MainApplication.iMainApplicationCallback = new MainApplication.iMainApplicationCallback() {
-                @Override
-                public void onPermissionSuccess(String message) {
-                    SplashActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            stopPointsAnimations();
-                            tvStatus.setText("Success Granting Permissions.");
-                            // Start MainActivity
-                            Intent intent = new Intent(SplashActivity.this, TagInventoryActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    });
-                }
+        if(Build.MANUFACTURER.contains("Zebra")) {
+            if (MainApplication.permissionGranted == false) {
+                setTitle(R.string.app_title);
+                startPointsAnimations(getString(R.string.app_title), getString(R.string.loading_status));
+                MainApplication.iMainApplicationCallback = new MainApplication.iMainApplicationCallback() {
+                    @Override
+                    public void onPermissionSuccess(String message) {
+                        SplashActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                stopPointsAnimations();
+                                tvStatus.setText("Success Granting Permissions.");
+                                // Start MainActivity
+                                Intent intent = new Intent(SplashActivity.this, TagInventoryActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        });
+                    }
 
-                @Override
-                public void onPermissionError(String message) {
-                    SplashActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            stopPointsAnimations();
-                            tvStatus.setText(message);
-                        }
-                    });
-                }
+                    @Override
+                    public void onPermissionError(String message) {
+                        SplashActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                stopPointsAnimations();
+                                tvStatus.setText(message);
+                            }
+                        });
+                    }
 
-                @Override
-                public void onPermissionDebug(String message) {
-                    SplashActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            tvStatus.setText(message);
-                        }
-                    });
+                    @Override
+                    public void onPermissionDebug(String message) {
+                        SplashActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tvStatus.setText(message);
+                            }
+                        });
 
-                }
-            };
+                    }
+                };
 
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-                return insets;
-            });
+                ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                    return insets;
+                });
+            } else {
+                stopPointsAnimations();
+                Intent intent = new Intent(SplashActivity.this, TagInventoryActivity.class);
+                startActivity(intent);
+                finish();
+            }
         }
-        else
-        {
-            stopPointsAnimations();
-            Intent intent = new Intent(SplashActivity.this, TagInventoryActivity.class);
-            startActivity(intent);
-            finish();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(Build.MANUFACTURER.contains("Zebra") == false) {
+            if (!Environment.isExternalStorageManager()) {
+                // Launch the settings page to request permission
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(SplashActivity.this, TagInventoryActivity.class);
+                startActivity(intent);
+                finish();
+            }
         }
     }
 
