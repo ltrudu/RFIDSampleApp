@@ -111,6 +111,11 @@ public class TagInventoryActivity extends AppCompatActivity {
             public void handleTriggerPress(boolean press) {
                 TagInventoryActivity.this.handleTriggerPress(press);
             }
+
+            @Override
+            public void onReaderDisconnected() {
+
+            }
         };
 
 
@@ -149,6 +154,7 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 MainApplication.rfidHandler.onPause();
+                finish();
             }
         });
 
@@ -194,6 +200,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         findViewById(R.id.btScanActivity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Avoid disconnecting the scanner in the onPause of this activity
                 Intent intent = new Intent(TagInventoryActivity.this, ScannerActivity.class);
                 startActivity(intent);
             }

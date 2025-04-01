@@ -19,5 +19,4 @@
         android:title="@string/Defaults"
         app:showAsAction="never" />
 
-
 </menu>

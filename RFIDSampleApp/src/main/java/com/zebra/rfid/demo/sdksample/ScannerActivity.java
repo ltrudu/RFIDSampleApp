@@ -70,12 +70,16 @@ public class ScannerActivity extends AppCompatActivity {
 
             @Override
             public void onMessage(String message) {
-
             }
 
             @Override
             public void handleTriggerPress(boolean press) {
                 ScannerActivity.this.handleTriggerPress(press);
+            }
+
+            @Override
+            public void onReaderDisconnected() {
+
             }
         };
 
@@ -84,10 +88,10 @@ public class ScannerActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        super.onResume();
+        //String result = MainApplication.rfidHandler.onResume(rfidHandlerInterface);
         scannerHandler.onResume();
         mScrollDownHandler = new Handler(Looper.getMainLooper());
-        String result = MainApplication.rfidHandler.onResume(rfidHandlerInterface);
-        super.onResume();
     }
 
     @Override

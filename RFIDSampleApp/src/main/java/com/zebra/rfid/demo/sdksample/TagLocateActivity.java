@@ -7,7 +7,6 @@ import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,7 +73,7 @@ public class TagLocateActivity extends AppCompatActivity {
             @Override
             public void onReaderConnected(String message) {
                 statusTextViewRFID.setText(message);
-                MainApplication.rfidHandler.configureReaderForLocationing();
+                MainApplication.rfidHandler.ConfigureReaderForLocationing();
             }
 
             @Override
@@ -89,6 +88,38 @@ public class TagLocateActivity extends AppCompatActivity {
 
             @Override
             public void handleTriggerPress(boolean press) {
+                if(press)
+                {
+                    if(isLocating == false)
+                    {
+                        isLocating = true;
+                        MainApplication.rfidHandler.startLocationing(mTagID);
+                        TagLocateActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                btLocate.setImageResource(R.drawable.ic_play_stop);
+                            }
+                        });
+                    }
+                }
+                else
+                {
+                    if(isLocating == true)
+                    {
+                        isLocating = false;
+                        MainApplication.rfidHandler.stopLocationing();
+                        TagLocateActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                btLocate.setImageResource(android.R.drawable.ic_media_play);
+                            }
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onReaderDisconnected() {
 
             }
         };
@@ -99,7 +130,6 @@ public class TagLocateActivity extends AppCompatActivity {
             toneGenerator = new ToneGenerator(streamType, percentageVolume);
         } catch (RuntimeException exception) {
             toneGenerator = null;
-
         }
 
         MainApplication.rfidHandler.onCreate(this, mHandlerInterface);
@@ -131,6 +161,7 @@ public class TagLocateActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        MainApplication.rfidHandler.onPause();
         super.onPause();
     }
 

@@ -1,7 +1,6 @@
 package com.zebra.rfid.demo.sdksample;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -17,8 +16,8 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     final static String TAG = "SCAN_HANDLER";
     private Context context;
     private SDKHandler sdkHandler;
-    private int scannerID;
-    static MyAsyncTask cmdExecTask = null;
+    private int scannerID = -1;
+    static ExecuteCommandAsyncTask cmdExecTask = null;
 
     public interface ScannerHandlerInterface {
         void onBarcodeData(String val, int symbo);
@@ -97,7 +96,23 @@ class ScannerHandler implements IDcsSdkApiDelegate {
         disconnect();
     }
 
-    public void setupScannerSDK(){
+    public synchronized void setupScannerSDK()
+    {
+        if(sdkHandler == null)
+            new setupScannerAsync().executeAsync();
+    }
+
+    private class setupScannerAsync extends ExecutorTask<Void, Integer, Boolean>
+    {
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            initializeSDK();
+            return true;
+        }
+    }
+
+    private void initializeSDK() {
         if (sdkHandler == null)
         {
             sdkHandler = new SDKHandler(context);
@@ -123,25 +138,33 @@ class ScannerHandler implements IDcsSdkApiDelegate {
             // subscribe to events set in notification mask
             sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
         }
-        if (sdkHandler != null)
-        {
-            ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
-            availableScanners  = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
+        if (sdkHandler != null) {
+            if (scannerID == -1) {
+                ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
+                availableScanners = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
 
-            if (availableScanners != null && availableScanners.size() > 0)
-            {
-                try
-                {
-                    scannerID= availableScanners.get(0).getScannerID();
-                    sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+                if (availableScanners != null && availableScanners.size() > 0) {
+                    try {
+                        scannerID = availableScanners.get(0).getScannerID();
+                        sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else
+                    Log.d(TAG, "Available scanners null");
+
             }
-            else
-                Log.d(TAG,"Available scanners null");
-
+        }
+        else
+        {
+            try
+            {
+                sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -151,6 +174,7 @@ class ScannerHandler implements IDcsSdkApiDelegate {
         try {
                 if (sdkHandler != null) {
                     sdkHandler.dcssdkTerminateCommunicationSession(scannerID);
+                    sdkHandler = null;
                 }
                 //reader = null;
         } catch (Exception e) {
@@ -161,24 +185,24 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
     public void pullTrigger(){
         String in_xml = "<inArgs><scannerID>" + scannerID+ "</scannerID></inArgs>";
-        cmdExecTask = new MyAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_PULL_TRIGGER, null);
-        cmdExecTask.execute(new String[]{in_xml});
+        cmdExecTask = new ExecuteCommandAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_PULL_TRIGGER, null);
+        cmdExecTask.executeAsync(new String[]{in_xml});
     }
 
     public void releaseTrigger()
     {
         String in_xml = "<inArgs><scannerID>" + scannerID+ "</scannerID></inArgs>";
-        cmdExecTask = new MyAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_RELEASE_TRIGGER, null);
-        cmdExecTask.execute(new String[]{in_xml});
+        cmdExecTask = new ExecuteCommandAsyncTask(scannerID, DCSSDKDefs.DCSSDK_COMMAND_OPCODE.DCSSDK_DEVICE_RELEASE_TRIGGER, null);
+        cmdExecTask.executeAsync(new String[]{in_xml});
     }
 
-    private class MyAsyncTask extends AsyncTask<String, Integer, Boolean> {
+    private class ExecuteCommandAsyncTask extends ExecutorTask<String, Integer, Boolean> {
         int scannerId;
         StringBuilder outXML;
         DCSSDKDefs.DCSSDK_COMMAND_OPCODE opcode;
         ///private CustomProgressDialog progressDialog;
 
-        public MyAsyncTask(int scannerId, DCSSDKDefs.DCSSDK_COMMAND_OPCODE opcode, StringBuilder outXML) {
+        public ExecuteCommandAsyncTask(int scannerId, DCSSDKDefs.DCSSDK_COMMAND_OPCODE opcode, StringBuilder outXML) {
             this.scannerId = scannerId;
             this.opcode = opcode;
             this.outXML = outXML;
@@ -189,7 +213,6 @@ class ScannerHandler implements IDcsSdkApiDelegate {
             super.onPreExecute();
 
         }
-
 
         @Override
         protected Boolean doInBackground(String... strings) {
@@ -216,7 +239,4 @@ class ScannerHandler implements IDcsSdkApiDelegate {
         }
         return false;
     }
-
-
-
 }

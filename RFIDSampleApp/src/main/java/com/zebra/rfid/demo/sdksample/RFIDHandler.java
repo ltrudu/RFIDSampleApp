@@ -19,6 +19,7 @@ import com.zebra.rfid.api3.OperationFailureException;
 import com.zebra.rfid.api3.RFIDReader;
 import com.zebra.rfid.api3.ReaderDevice;
 import com.zebra.rfid.api3.Readers;
+import com.zebra.rfid.api3.RegulatoryConfig;
 import com.zebra.rfid.api3.RfidEventsListener;
 import com.zebra.rfid.api3.RfidReadEvents;
 import com.zebra.rfid.api3.RfidStatusEvents;
@@ -32,7 +33,6 @@ import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
 
 
 class RFIDHandler implements Readers.RFIDReaderEventHandler {
@@ -60,6 +60,8 @@ final static String TAG = "RFID_HANDLER";
         void onMessage(String message);
 
         void handleTriggerPress(boolean press);
+
+        void onReaderDisconnected();
     }
 
     private RFIDHandlerInterface connectionInterface;
@@ -235,8 +237,6 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
-
-
     private synchronized void connectReader(){
         if(!isReaderConnected()){
             new ConnectionTask().executeAsync();
@@ -314,6 +314,12 @@ final static String TAG = "RFID_HANDLER";
             disconnect();
     }
 
+    public boolean isConnected()
+    {
+        if(reader == null)
+            return false;
+        return reader.isConnected();
+    }
 
     private synchronized String connect() {
         if (reader != null) {
@@ -380,6 +386,8 @@ final static String TAG = "RFID_HANDLER";
                 // receive events from reader
                 if (eventHandler == null)
                     eventHandler = new EventHandler();
+                RegulatoryConfig reg = new RegulatoryConfig();
+
                 reader.Events.addEventsListener(eventHandler);
                 // HH event
                 reader.Events.setHandheldEvent(true);
@@ -395,11 +403,13 @@ final static String TAG = "RFID_HANDLER";
                 MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
+
                 //TODO: Check documentation
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
+
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
                 // Set the singulation control
                 Antennas.SingulationControl s1_singulationControl = reader.Config.Antennas.getSingulationControl(1);
@@ -417,7 +427,7 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
-    public void configureReaderForLocationing() {
+    public void ConfigureReaderForLocationing() {
         if (reader.isConnected()) {
             TriggerInfo triggerInfo = new TriggerInfo();
             triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
@@ -797,7 +807,10 @@ final static String TAG = "RFID_HANDLER";
                 new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected Void doInBackground(Void... voids) {
-
+                        if(connectionInterface != null)
+                        {
+                            connectionInterface.onReaderDisconnected();
+                        }
                         disconnect();
                         return null;
                     }
