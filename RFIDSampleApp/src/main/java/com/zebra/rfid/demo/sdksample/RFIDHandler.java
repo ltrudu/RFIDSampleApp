@@ -55,6 +55,7 @@ final static String TAG = "RFID_HANDLER";
     public interface RFIDHandlerInterface
     {
         void onReaderConnected(String message);
+        void onReaderDisconnected();
         void onTagData(TagData[] tagData);
 
         void onMessage(String message);
@@ -144,7 +145,7 @@ final static String TAG = "RFID_HANDLER";
         return "Default settings applied";
     }
 
-    private boolean isReaderConnected() {
+    public boolean isReaderConnected() {
         if (reader != null && reader.isConnected())
             return true;
         else {
@@ -315,7 +316,7 @@ final static String TAG = "RFID_HANDLER";
     }
 
 
-    private synchronized String connect() {
+    protected synchronized String connect() {
         if (reader != null) {
             Log.d(TAG, "connect " + reader.getHostName());
             try {
@@ -429,7 +430,8 @@ final static String TAG = "RFID_HANDLER";
     }
 
 
-    private synchronized void disconnect() {
+    protected synchronized String disconnect() {
+        String returnString = "";
         Log.d(TAG, "Disconnect");
         try {
             if (reader != null) {
@@ -439,15 +441,21 @@ final static String TAG = "RFID_HANDLER";
                 reader.disconnect();
                 if(connectionInterface != null)
                     connectionInterface.onMessage("Disconnecting reader");
+
+                returnString = "Reader disconnected";
                 //reader = null;
             }
         } catch (InvalidUsageException e) {
             e.printStackTrace();
+            returnString = e.getMessage();
         } catch (OperationFailureException e) {
             e.printStackTrace();
+            returnString = e.getMessage();
         } catch (Exception e) {
             e.printStackTrace();
+            returnString = e.getMessage();
         }
+        return returnString;
     }
 
     private synchronized void dispose() {

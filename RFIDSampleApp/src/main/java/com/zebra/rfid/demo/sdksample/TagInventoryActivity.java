@@ -100,6 +100,11 @@ public class TagInventoryActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onReaderDisconnected() {
+                statusTextViewRFID.setText("Reader Disconnected");
+            }
+
+            @Override
             public void onTagData(TagData[] tagData) {
                 TagInventoryActivity.this.handleTagdata(tagData);
             }
@@ -247,6 +252,24 @@ public class TagInventoryActivity extends AppCompatActivity {
             String result = MainApplication.rfidHandler.setConfigDefaults();
             Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
             return true;
+        }
+
+        if( id == R.id.Disconnect)
+        {
+            if(MainApplication.rfidHandler != null && MainApplication.rfidHandler.isReaderConnected())
+            {
+                String response = MainApplication.rfidHandler.disconnect();
+                statusTextViewRFID.setText(response);
+            }
+        }
+
+        if( id == R.id.Connect)
+        {
+            if(MainApplication.rfidHandler != null && MainApplication.rfidHandler.isReaderConnected() == false)
+            {
+                String response = MainApplication.rfidHandler.connect();
+                statusTextViewRFID.setText(response);
+            }
         }
         return super.onOptionsItemSelected(item);
     }
