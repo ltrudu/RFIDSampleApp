@@ -50,7 +50,7 @@ final static String TAG = "RFID_HANDLER";
     // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode
     String readerName = "RFD40";
 
-
+    public boolean keepConnexion = false;
 
     public interface RFIDHandlerInterface
     {
@@ -69,7 +69,6 @@ final static String TAG = "RFID_HANDLER";
     void onCreate(Context context, RFIDHandlerInterface connectionInterface) {
         this.context = context;
         this.connectionInterface = connectionInterface;
-        InitSDK();
     }
 
 
@@ -159,28 +158,29 @@ final static String TAG = "RFID_HANDLER";
     //  Activity life cycle behavior
     //
 
-    String onResume(RFIDHandlerInterface connectionInterface) {
+    void onResume(RFIDHandlerInterface connectionInterface) {
         this.connectionInterface = connectionInterface;
-        return connect();
+        if (readers == null) {
+            new CreateInstanceTask().executeAsync();
+        }
+        else
+            connectReader();
     }
 
     void onPause() {
-        disconnect();
+        if(!keepConnexion)
+            disconnectReader();
+        else
+        {
+            if(connectionInterface != null)
+            {
+                connectionInterface.onReaderDisconnected();
+            }
+        }
     }
 
      void onDestroy() {
         dispose();
-    }
-
-    //
-    // RFID SDK
-    //
-    private void InitSDK() {
-        Log.d(TAG, "InitSDK");
-        if (readers == null) {
-            new CreateInstanceTask().executeAsync();
-        } else
-            connectReader();
     }
 
     // Enumerates SDK based on host device
@@ -241,13 +241,21 @@ final static String TAG = "RFID_HANDLER";
         if(!isReaderConnected()){
             new ConnectionTask().executeAsync();
         }
+        else
+        {
+            if(connectionInterface != null)
+            {
+                connectionInterface.onReaderConnected("Reader connected");
+            }
+        }
     }
 
     private class ConnectionTask extends ExecutorTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... voids) {
             Log.d(TAG, "ConnectionTask");
-            GetAvailableReader();
+            if(reader == null)
+                GetAvailableReader();
             if (reader != null)
                 return connect();
             return "Failed to find or connect reader";
@@ -321,7 +329,8 @@ final static String TAG = "RFID_HANDLER";
         return reader.isConnected();
     }
 
-    private synchronized String connect() {
+
+    private String connect() {
         if (reader != null) {
             Log.d(TAG, "connect " + reader.getHostName());
             try {
@@ -350,6 +359,7 @@ final static String TAG = "RFID_HANDLER";
         return "";
     }
 
+
     public void ConfigureReaderForScanning()
     {
         Log.d(TAG, "ConfigureReaderForScanning " + reader.getHostName());
@@ -359,12 +369,13 @@ final static String TAG = "RFID_HANDLER";
             triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
             try {
                 // receive events from reader
-                if (eventHandler == null)
+                if (eventHandler == null) {
                     eventHandler = new EventHandler();
-                reader.Events.addEventsListener(eventHandler);
+                    reader.Events.addEventsListener(eventHandler);
+                }
 
-                // set trigger mode as rfid so scanner beam will not come
-                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.BARCODE_MODE, true);
+                // set trigger mode as scanner
+                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.BARCODE_MODE, false);
                 // set start and stop triggers
                 reader.Config.setStartTrigger(triggerInfo.StartTrigger);
                 reader.Config.setStopTrigger(triggerInfo.StopTrigger);
@@ -382,13 +393,13 @@ final static String TAG = "RFID_HANDLER";
             TriggerInfo triggerInfo = new TriggerInfo();
             triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
             triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
+
             try {
                 // receive events from reader
-                if (eventHandler == null)
+                if (eventHandler == null) {
                     eventHandler = new EventHandler();
-                RegulatoryConfig reg = new RegulatoryConfig();
-
-                reader.Events.addEventsListener(eventHandler);
+                    reader.Events.addEventsListener(eventHandler);
+                }
                 // HH event
                 reader.Events.setHandheldEvent(true);
                 // tag event with tag data
@@ -409,6 +420,8 @@ final static String TAG = "RFID_HANDLER";
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
+
+                reader.Config.setUniqueTagReport(false);
 
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
                 // Set the singulation control
@@ -434,9 +447,10 @@ final static String TAG = "RFID_HANDLER";
             triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
             try {
                 // receive events from reader
-                if (eventHandler == null)
+                if (eventHandler == null) {
                     eventHandler = new EventHandler();
-                reader.Events.addEventsListener(eventHandler);
+                    reader.Events.addEventsListener(eventHandler);
+                }
                 // HH event
                 reader.Events.setHandheldEvent(true);
                 // tag event with tag data
@@ -464,8 +478,23 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
+    private synchronized void disconnectReader()
+    {
+        if(isReaderConnected())
+        {
+            new DisconnectTask().executeAsync();
+        }
+    }
 
-    private synchronized void disconnect() {
+    private class DisconnectTask extends ExecutorTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            return disconnect();
+        }
+    }
+
+    private String disconnect() {
         Log.d(TAG, "Disconnect");
         try {
             if (reader != null) {
@@ -475,15 +504,20 @@ final static String TAG = "RFID_HANDLER";
                 reader.disconnect();
                 if(connectionInterface != null)
                     connectionInterface.onMessage("Disconnecting reader");
+
                 //reader = null;
             }
         } catch (InvalidUsageException e) {
             e.printStackTrace();
+            return e.getMessage();
         } catch (OperationFailureException e) {
             e.printStackTrace();
+            return e.getMessage();
         } catch (Exception e) {
             e.printStackTrace();
+            return e.getMessage();
         }
+        return "Reader disconnected";
     }
 
     private synchronized void dispose() {

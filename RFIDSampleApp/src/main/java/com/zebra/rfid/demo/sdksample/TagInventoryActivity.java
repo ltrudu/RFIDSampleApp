@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -61,6 +63,12 @@ public class TagInventoryActivity extends AppCompatActivity {
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
     public static boolean bAllowLocationing = true;
+
+    ActivityResultLauncher<Intent> resultLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        MainApplication.rfidHandler.keepConnexion = false;
+                    });
 
     private ConstraintLayout clQuestion;
 
@@ -138,12 +146,13 @@ public class TagInventoryActivity extends AppCompatActivity {
         mTagDataAdapter = new TagDataAdapter(mTagDataList, new TagDataAdapter.OnItemClickListener() {
             @Override
             public void onClickItem(int position, String epc) {
+                MainApplication.rfidHandler.keepConnexion = true;
                 Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(TagInventoryActivity.this, TagLocateActivity.class);
                 Bundle b = new Bundle();
                 b.putString("TagID", epc); //Your id
                 intent.putExtras(b); //Put your id to your next Intent
-                startActivity(intent);
+                resultLauncher.launch(intent);
             }
         });
         mTagDataRecyclerView.setAdapter(mTagDataAdapter);
@@ -201,8 +210,9 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Avoid disconnecting the scanner in the onPause of this activity
+                MainApplication.rfidHandler.keepConnexion = true;
                 Intent intent = new Intent(TagInventoryActivity.this, ScannerActivity.class);
-                startActivity(intent);
+                resultLauncher.launch(intent);
             }
         });
     }
@@ -264,8 +274,7 @@ public class TagInventoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String result = MainApplication.rfidHandler.onResume(mHandlerInterface);
-        statusTextViewRFID.setText(result);
+        MainApplication.rfidHandler.onResume(mHandlerInterface);
         findViewById(R.id.btStartInventory).setEnabled(true);
         if(mTagDataList.size() > 0) {
             findViewById(R.id.ExportTXT).setEnabled(true);
@@ -286,17 +295,11 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void StartInventory()
     {
-        mTagDataList.clear();
-        mTagDataRecyclerView.post(new Runnable()
-        {
-            @Override
-            public void run() {
-                mTagDataAdapter.notifyDataSetChanged();
-            }
-        });
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mTagDataList.clear();
+                mTagDataAdapter.notifyDataSetChanged();
                 tvNbItems.setText("0");
                 findViewById(R.id.btStartInventory).setEnabled(false);
                 findViewById(R.id.ExportTXT).setEnabled(false);

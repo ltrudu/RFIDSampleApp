@@ -48,6 +48,11 @@
     <uses-permission android:name="com.symbol.emdk.permission.EMDK" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
-    <uses-permission android:name="com.symbol.datawedge.permission.contentprovider" />
+
+    <permission android:name="com.zebra.scannercontrol.SERVICE_LAUNCH_PERMISSION"
+        android:protectionLevel="normal" />
+
+    <permission android:name="com.zebra.scannercontrol.ACTIVITY_LAUNCH_PERMISSION"
+         android:protectionLevel="normal" />
 
 </manifest>

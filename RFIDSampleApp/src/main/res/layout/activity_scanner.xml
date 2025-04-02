@@ -22,16 +22,23 @@
         android:layout_height="match_parent"
         android:layout_below="@id/textView6"
         android:layout_alignParentStart="true"
-        android:layout_above="@+id/btScanActivityClose"
+        android:layout_above="@+id/btScan"
         android:layout_marginStart="0dp"
         android:layout_marginTop="15dp"
         android:layout_marginBottom="1dp">
 
-        <TextView
+        <EditText
             android:id="@+id/et_ScannerActivity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </ScrollView>
+
+    <Button
+        android:id="@+id/btScan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan"
+        android:layout_above="@+id/btScanActivityClose"/>
 
     <Button
         android:id="@+id/btScanActivityClose"

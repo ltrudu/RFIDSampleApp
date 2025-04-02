@@ -93,41 +93,5 @@ public class MainApplication extends Application {
                 MainApplication.iMainApplicationCallback.onPermissionSuccess("Success");
             }
         }
-
-        /*
-        //Scanner Initializations
-        DWProfileSetConfigSettings setConfigSettings = new DWProfileSetConfigSettings()
-        {{
-            mProfileName = getPackageName();
-            mTimeOutMS = 10000;
-            MainBundle.APP_LIST = new HashMap<>();
-            MainBundle.APP_LIST.put(getPackageName(), null);
-            MainBundle.CONFIG_MODE = MB_E_CONFIG_MODE.CREATE_IF_NOT_EXIST;
-            IntentPlugin.intent_action = getPackageName() + ".RECVR";
-            IntentPlugin.intent_category = "android.intent.category.DEFAULT";
-            IntentPlugin.intent_output_enabled = true;
-            IntentPlugin.intent_delivery = INT_E_DELIVERY.BROADCAST;
-            KeystrokePlugin.keystroke_output_enabled = false;
-            ScannerPlugin.scanner_selection_by_identifier = SC_E_SCANNER_IDENTIFIER.AUTO;
-            ScannerPlugin.scanner_input_enabled = true;
-        }};
-        CreateProfileHelper.createProfile(this, setConfigSettings, new CreateProfileHelper.CreateProfileHelperCallback() {
-            @Override
-            public void onSuccess(String profileName) {
-                Log.d(MainApplication.TAG, "Profile " + profileName + " created with success.");
-            }
-
-            @Override
-            public void onError(String profileName, String error, String errorMessage) {
-                Log.e(MainApplication.TAG, "Error creating profile " + profileName + " :\n" + error + "\n" + errorMessage);
-            }
-
-            @Override
-            public void ondebugMessage(String profileName, String message) {
-                Log.v(MainApplication.TAG, message);
-            }
-        });
-        */
-
     }
 }

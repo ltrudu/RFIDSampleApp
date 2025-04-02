@@ -5,9 +5,11 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+import com.zebra.barcode.sdk.sms.ConfigurationUpdateEvent;
 import com.zebra.scannercontrol.DCSSDKDefs;
 import com.zebra.scannercontrol.DCSScannerInfo;
 import com.zebra.scannercontrol.FirmwareUpdateEvent;
+import com.zebra.scannercontrol.IDCConfig;
 import com.zebra.scannercontrol.IDcsSdkApiDelegate;
 import com.zebra.scannercontrol.SDKHandler;
 
@@ -61,17 +63,17 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
     @Override
     public void dcssdkEventImage(byte[] bytes, int i) {
-
+        int j = i;
     }
 
     @Override
     public void dcssdkEventVideo(byte[] bytes, int i) {
-
+        int j = i;
     }
 
     @Override
     public void dcssdkEventBinaryData(byte[] bytes, int i) {
-
+        int j = i;
     }
 
     @Override
@@ -81,30 +83,36 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
     @Override
     public void dcssdkEventAuxScannerAppeared(DCSScannerInfo dcsScannerInfo, DCSScannerInfo dcsScannerInfo1) {
+    }
+
+    @Override
+    public void dcssdkEventConfigurationUpdate(ConfigurationUpdateEvent configurationUpdateEvent) {
 
     }
+
 
     //
     //  Activity life cycle behavior
     //
 
     void onResume() {
-        setupScannerSDK();
+        if(sdkHandler == null)
+            initializeSDK();//setupScannerSDK();
     }
 
     void onPause() {
         disconnect();
     }
 
-    public synchronized void setupScannerSDK()
+    public void setupScannerSDK()
     {
-        if(sdkHandler == null)
+        if(sdkHandler == null) {
             new setupScannerAsync().executeAsync();
+        }
     }
 
     private class setupScannerAsync extends ExecutorTask<Void, Integer, Boolean>
     {
-
         @Override
         protected Boolean doInBackground(Void... voids) {
             initializeSDK();
@@ -115,15 +123,17 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     private void initializeSDK() {
         if (sdkHandler == null)
         {
-            sdkHandler = new SDKHandler(context);
+            sdkHandler = new SDKHandler(context, false);
+
             //For cdc device
-            DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
+            //DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
 
             //For bluetooth device
-            DCSSDKDefs.DCSSDK_RESULT btResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE);
+            //DCSSDKDefs.DCSSDK_RESULT btResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE);
             DCSSDKDefs.DCSSDK_RESULT btNormalResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL);
 
-            Log.d(TAG,btNormalResult+ " results "+ btResult);
+
+            //Log.d(TAG,btNormalResult+ " results "+ btResult);
             sdkHandler.dcssdkSetDelegate(this);
 
             int notifications_mask = 0;
@@ -131,8 +141,12 @@ class ScannerHandler implements IDcsSdkApiDelegate {
             notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_APPEARANCE.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_DISAPPEARANCE.value;
 
             // We would like to subscribe to all scanner connection events
-            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_ESTABLISHMENT.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_TERMINATION.value;
+            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_ESTABLISHMENT.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_TERMINATION.value;
 
+            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value;
+
+            // enable scanner detection
+            sdkHandler.dcssdkEnableAvailableScannersDetection(true);
 
             // We would like to subscribe to all barcode events
             // subscribe to events set in notification mask
@@ -145,7 +159,7 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
                 if (availableScanners != null && availableScanners.size() > 0) {
                     try {
-                        scannerID = availableScanners.get(0).getScannerID();
+                        scannerID = availableScanners.get(1).getScannerID();
                         sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
                     } catch (Exception e) {
                         e.printStackTrace();

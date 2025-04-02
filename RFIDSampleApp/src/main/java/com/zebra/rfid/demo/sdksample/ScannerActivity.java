@@ -50,6 +50,14 @@ public class ScannerActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.btScan).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scannerHandler.pullTrigger();
+            }
+        });
+
+
         scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerInterface() {
             @Override
             public void onBarcodeData(String val, int symbo) {
@@ -61,6 +69,7 @@ public class ScannerActivity extends AppCompatActivity {
             @Override
             public void onReaderConnected(String message) {
                 MainApplication.rfidHandler.ConfigureReaderForScanning();
+
             }
 
             @Override
@@ -79,7 +88,6 @@ public class ScannerActivity extends AppCompatActivity {
 
             @Override
             public void onReaderDisconnected() {
-
             }
         };
 
@@ -89,13 +97,14 @@ public class ScannerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //String result = MainApplication.rfidHandler.onResume(rfidHandlerInterface);
         scannerHandler.onResume();
+        MainApplication.rfidHandler.onResume(rfidHandlerInterface);
         mScrollDownHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
     protected void onPause() {
+        scannerHandler.onPause();
         MainApplication.rfidHandler.onPause();
         if(mScrollDownRunnable != null)
         {
@@ -103,7 +112,6 @@ public class ScannerActivity extends AppCompatActivity {
             mScrollDownRunnable = null;
             mScrollDownHandler = null;
         }
-        scannerHandler.onPause();
         super.onPause();
     }
 
