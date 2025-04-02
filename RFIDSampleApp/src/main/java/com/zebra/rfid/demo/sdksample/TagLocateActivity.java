@@ -77,6 +77,11 @@ public class TagLocateActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onReaderDisconnected() {
+                statusTextViewRFID.setText("Reader Disconnected");
+            }
+
+            @Override
             public void onTagData(TagData[] tagData) {
                 TagLocateActivity.this.handleTagData(tagData);
             }
@@ -116,11 +121,6 @@ public class TagLocateActivity extends AppCompatActivity {
                         });
                     }
                 }
-            }
-
-            @Override
-            public void onReaderDisconnected() {
-
             }
         };
 

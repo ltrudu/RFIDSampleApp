@@ -55,13 +55,12 @@ final static String TAG = "RFID_HANDLER";
     public interface RFIDHandlerInterface
     {
         void onReaderConnected(String message);
+        void onReaderDisconnected();
         void onTagData(TagData[] tagData);
 
         void onMessage(String message);
 
         void handleTriggerPress(boolean press);
-
-        void onReaderDisconnected();
     }
 
     private RFIDHandlerInterface connectionInterface;
@@ -145,7 +144,7 @@ final static String TAG = "RFID_HANDLER";
         return "Default settings applied";
     }
 
-    private boolean isReaderConnected() {
+    public boolean isReaderConnected() {
         if (reader != null && reader.isConnected())
             return true;
         else {
@@ -330,7 +329,8 @@ final static String TAG = "RFID_HANDLER";
     }
 
 
-    private String connect() {
+
+    public String connect() {
         if (reader != null) {
             Log.d(TAG, "connect " + reader.getHostName());
             try {
@@ -511,15 +511,17 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
-    private class DisconnectTask extends ExecutorTask<Void, Void, String> {
-
+    private class DisconnectTask extends ExecutorTask<Void, Integer, Boolean>
+    {
         @Override
-        protected String doInBackground(Void... voids) {
-            return disconnect();
+        protected Boolean doInBackground(Void... voids) {
+            disconnect();
+            return true;
         }
     }
 
-    private String disconnect() {
+    public String disconnect() {
+
         Log.d(TAG, "Disconnect");
         try {
             if (reader != null) {
