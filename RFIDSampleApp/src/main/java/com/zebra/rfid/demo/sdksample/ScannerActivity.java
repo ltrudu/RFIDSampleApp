@@ -17,9 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class ScannerActivity extends AppCompatActivity {
 
-    RFIDHandler rfidHandler;
     RFIDHandler.RFIDHandlerInterface rfidHandlerInterface;
-    ScannerHandler scannerHandler;
 
     private TextView et_results;
     private ScrollView sv_results;
@@ -53,17 +51,10 @@ public class ScannerActivity extends AppCompatActivity {
         findViewById(R.id.btScan).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                scannerHandler.pullTrigger();
+                MainApplication.scannerHandler.pullTrigger();
             }
         });
 
-
-        scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerInterface() {
-            @Override
-            public void onBarcodeData(String val, int symbo) {
-                addLineToResults(val);
-            }
-        });
 
         rfidHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
             @Override
@@ -97,14 +88,19 @@ public class ScannerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        scannerHandler.onResume();
+        MainApplication.scannerHandler.onResume(new ScannerHandler.ScannerHandlerInterface() {
+            @Override
+            public void onBarcodeData(String val, int symbo) {
+                addLineToResults(val);
+            }
+        });
         MainApplication.rfidHandler.onResume(rfidHandlerInterface);
         mScrollDownHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
     protected void onPause() {
-        scannerHandler.onPause();
+        MainApplication.scannerHandler.onPause();
         MainApplication.rfidHandler.onPause();
         if(mScrollDownRunnable != null)
         {
@@ -152,11 +148,11 @@ public class ScannerActivity extends AppCompatActivity {
     private void handleTriggerPress(boolean press) {
         if(press)
         {
-            scannerHandler.pullTrigger();
+            MainApplication.scannerHandler.pullTrigger();
         }
         else
         {
-            scannerHandler.releaseTrigger();
+            MainApplication.scannerHandler.releaseTrigger();
         }
     }
 }

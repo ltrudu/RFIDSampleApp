@@ -373,9 +373,20 @@ final static String TAG = "RFID_HANDLER";
                     eventHandler = new EventHandler();
                     reader.Events.addEventsListener(eventHandler);
                 }
+                else
+                {
+                    reader.Events.removeEventsListener(eventHandler);
+                    eventHandler = new EventHandler();
+                    reader.Events.addEventsListener(eventHandler);
+                }
+                // HH event
+                reader.Events.setHandheldEvent(true);
+                reader.Events.setScanDataEvent(true);
+                reader.Events.setTagReadEvent(false);
+                reader.Events.setAttachTagDataWithReadEvent(false);
 
                 // set trigger mode as scanner
-                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.BARCODE_MODE, false);
+                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.RFID_MODE, false);
                 // set start and stop triggers
                 reader.Config.setStartTrigger(triggerInfo.StartTrigger);
                 reader.Config.setStopTrigger(triggerInfo.StopTrigger);
@@ -400,6 +411,13 @@ final static String TAG = "RFID_HANDLER";
                     eventHandler = new EventHandler();
                     reader.Events.addEventsListener(eventHandler);
                 }
+                else
+                {
+                    reader.Events.removeEventsListener(eventHandler);
+                    eventHandler = new EventHandler();
+                    reader.Events.addEventsListener(eventHandler);
+                }
+
                 // HH event
                 reader.Events.setHandheldEvent(true);
                 // tag event with tag data
@@ -451,6 +469,13 @@ final static String TAG = "RFID_HANDLER";
                     eventHandler = new EventHandler();
                     reader.Events.addEventsListener(eventHandler);
                 }
+                else
+                {
+                    reader.Events.removeEventsListener(eventHandler);
+                    eventHandler = new EventHandler();
+                    reader.Events.addEventsListener(eventHandler);
+                }
+
                 // HH event
                 reader.Events.setHandheldEvent(true);
                 // tag event with tag data

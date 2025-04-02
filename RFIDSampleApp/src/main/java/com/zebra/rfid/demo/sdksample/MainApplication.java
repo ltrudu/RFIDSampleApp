@@ -25,6 +25,7 @@ public class MainApplication extends Application {
     //protected static DWProfileSetConfigSettings mSetConfigSettings;
 
     protected static RFIDHandler rfidHandler;
+    protected static ScannerHandler scannerHandler;
 
     public interface iMainApplicationCallback
     {
@@ -46,6 +47,8 @@ public class MainApplication extends Application {
     public void onCreate() {
         super.onCreate();
         rfidHandler = new RFIDHandler();
+        scannerHandler = new ScannerHandler(this);
+
         String manufacturer = Build.MANUFACTURER;
         if(manufacturer.contains("Zebra")) {
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {

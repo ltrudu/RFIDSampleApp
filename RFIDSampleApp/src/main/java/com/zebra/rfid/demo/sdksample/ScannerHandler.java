@@ -27,10 +27,10 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
     private ScannerHandlerInterface scannerHandlerCallback;
 
-    public ScannerHandler(Context context, ScannerHandlerInterface scannerHandlerCallback)
+    public ScannerHandler(Context context)
     {
         this.context = context;
-        this.scannerHandlerCallback = scannerHandlerCallback;
+        initializeSDK();
     }
 
     @Override
@@ -95,20 +95,14 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     //  Activity life cycle behavior
     //
 
-    void onResume() {
-        if(sdkHandler == null)
-            initializeSDK();//setupScannerSDK();
+    void onResume(ScannerHandlerInterface scannerHandlerCallback) {
+        this.scannerHandlerCallback = scannerHandlerCallback;
+        initializeSDK();
     }
 
     void onPause() {
         disconnect();
-    }
-
-    public void setupScannerSDK()
-    {
-        if(sdkHandler == null) {
-            new setupScannerAsync().executeAsync();
-        }
+        sdkHandler = null;
     }
 
     private class setupScannerAsync extends ExecutorTask<Void, Integer, Boolean>
@@ -121,66 +115,49 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     }
 
     private void initializeSDK() {
-        if (sdkHandler == null)
-        {
-            sdkHandler = new SDKHandler(context, false);
 
-            //For cdc device
-            //DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
+        sdkHandler = new SDKHandler(context, true);
 
-            //For bluetooth device
-            //DCSSDKDefs.DCSSDK_RESULT btResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE);
-            DCSSDKDefs.DCSSDK_RESULT btNormalResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL);
+        //For cdc device
+        //DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
+
+        //For bluetooth device
+        //DCSSDKDefs.DCSSDK_RESULT btResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE);
+        DCSSDKDefs.DCSSDK_RESULT btNormalResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL);
 
 
-            //Log.d(TAG,btNormalResult+ " results "+ btResult);
-            sdkHandler.dcssdkSetDelegate(this);
+        //Log.d(TAG,btNormalResult+ " results "+ btResult);
+        sdkHandler.dcssdkSetDelegate(this);
 
-            int notifications_mask = 0;
-            // We would like to subscribe to all scanner available/not-available events
-            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_APPEARANCE.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_DISAPPEARANCE.value;
+        int notifications_mask = 0;
+        // We would like to subscribe to all scanner available/not-available events
+        notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_APPEARANCE.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_DISAPPEARANCE.value;
 
-            // We would like to subscribe to all scanner connection events
-            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_ESTABLISHMENT.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_TERMINATION.value;
+        // We would like to subscribe to all scanner connection events
+        notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_ESTABLISHMENT.value | DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_TERMINATION.value;
 
-            notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value;
+        notifications_mask |= DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value;
 
-            // enable scanner detection
-            sdkHandler.dcssdkEnableAvailableScannersDetection(true);
+        // enable scanner detection
+        sdkHandler.dcssdkEnableAvailableScannersDetection(true);
 
-            // We would like to subscribe to all barcode events
-            // subscribe to events set in notification mask
-            sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
-        }
-        if (sdkHandler != null) {
-            if (scannerID == -1) {
-                ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
-                availableScanners = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
+        // We would like to subscribe to all barcode events
+        // subscribe to events set in notification mask
+        sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
 
-                if (availableScanners != null && availableScanners.size() > 0) {
-                    try {
-                        scannerID = availableScanners.get(1).getScannerID();
-                        sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } else
-                    Log.d(TAG, "Available scanners null");
 
-            }
-        }
-        else
-        {
-            try
-            {
+        ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
+        availableScanners = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
+
+        if (availableScanners != null && availableScanners.size() > 0) {
+            try {
+                scannerID = availableScanners.get(0).getScannerID();
                 sdkHandler.dcssdkEstablishCommunicationSession(scannerID);
-            }
-            catch(Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-
+        } else
+            Log.d(TAG, "Available scanners null");
     }
 
     private synchronized void disconnect() {

@@ -180,8 +180,14 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                     }
                 }
         );
+    }
 
-        scannerHandler = new ScannerHandler(this, new ScannerHandler.ScannerHandlerInterface() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        readDataOnTag();
+        mScanReceiver.startReceive();
+        scannerHandler.onResume(new ScannerHandler.ScannerHandlerInterface() {
             @Override
             public void onBarcodeData(String val, int symbo) {
                 if(mBarcodeDataModelArrayList.size() <= 7 && symbo == 11) {
@@ -203,14 +209,6 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
 
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        readDataOnTag();
-        mScanReceiver.startReceive();
-        scannerHandler.onResume();
     }
 
     @Override
