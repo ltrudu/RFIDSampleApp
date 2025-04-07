@@ -1,5 +1,5 @@
 <resources>
-    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="fab_margin">5dp</dimen>
     <!-- Font size for locationing font -->
     <dimen name="locationing_font_size">10sp</dimen>
 </resources>

@@ -37,7 +37,7 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="503dp"
         android:layout_weight="90"
         android:paddingLeft="10dp"
         android:paddingRight="10dp">
@@ -46,8 +46,8 @@
             android:id="@+id/rgLocationBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textMultiLine"
-            android:gravity="center" />
+            android:gravity="center"
+            android:inputType="textMultiLine" />
 
 
     </LinearLayout>
@@ -57,8 +57,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
-        android:layout_margin="@dimen/fab_margin"
         android:onClick="locationingButtonClicked"
         app:backgroundTint="#0066ff"
         app:srcCompat="@android:drawable/ic_media_play" />
+
+    <Button
+        android:id="@+id/btLocateActivityClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Close" />
 </LinearLayout>
