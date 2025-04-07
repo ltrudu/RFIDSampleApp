@@ -96,6 +96,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         if(model.equalsIgnoreCase("EM45") == true)
         {
             bAllowLocationing = false;
+            findViewById(R.id.btScanActivity).setVisibility(View.GONE);
         }
 
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
