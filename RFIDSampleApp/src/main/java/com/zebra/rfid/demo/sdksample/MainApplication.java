@@ -43,13 +43,14 @@ public class MainApplication extends Application {
     // Otherwise Splash Screen is too fast
     private final static int S_FAKE_DELAY = 2000;
 
+    public static String manufacturer = Build.MANUFACTURER;
+    public static String device = Build.DEVICE;
+    public static String model = Build.MODEL;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        rfidHandler = new RFIDHandler();
-        scannerHandler = new ScannerHandler(this);
 
-        String manufacturer = Build.MANUFACTURER;
         if(manufacturer.contains("Zebra")) {
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
@@ -57,12 +58,40 @@ public class MainApplication extends Application {
                     CriticalPermissionsHelper.grantPermission(MainApplication.this, EPermissionType.MANAGE_EXTERNAL_STORAGE, new IResultCallbacks() {
                         @Override
                         public void onSuccess(String message, String resultXML) {
-                            permissionGranted = true;
-                            sErrorMessage = null;
-                            if(MainApplication.iMainApplicationCallback != null)
-                            {
-                                MainApplication.iMainApplicationCallback.onPermissionSuccess(message);
-                            }
+                            // Autogrant bluetooth connect permission
+                            CriticalPermissionsHelper.grantPermission(MainApplication.this, EPermissionType.ALL_DANGEROUS_PERMISSIONS, new IResultCallbacks() {
+                                        @Override
+                                        public void onSuccess(String message, String resultXML) {
+                                            permissionGranted = true;
+                                            sErrorMessage = null;
+                                            if(MainApplication.iMainApplicationCallback != null)
+                                            {
+                                                MainApplication.iMainApplicationCallback.onPermissionSuccess(message);
+                                            }
+                                            // Initialize rfidHandler and scannerHandler now that we have permissions
+                                            rfidHandler = new RFIDHandler();
+                                            scannerHandler = new ScannerHandler(MainApplication.this);
+                                        }
+
+                                        @Override
+                                        public void onError(String message, String resultXML) {
+                                            Toast.makeText(MainApplication.this, message, Toast.LENGTH_LONG).show();
+                                            permissionGranted = true;
+                                            sErrorMessage = message;
+                                            if(MainApplication.iMainApplicationCallback != null)
+                                            {
+                                                MainApplication.iMainApplicationCallback.onPermissionError(message);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onDebugStatus(String message) {
+                                            if(MainApplication.iMainApplicationCallback != null)
+                                            {
+                                                MainApplication.iMainApplicationCallback.onPermissionDebug(message);
+                                            }
+                                        }
+                                    });
                         }
 
                         @Override

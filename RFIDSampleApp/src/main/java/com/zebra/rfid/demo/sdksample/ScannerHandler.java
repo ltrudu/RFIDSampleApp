@@ -1,11 +1,11 @@
 package com.zebra.rfid.demo.sdksample;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
 
-import com.zebra.barcode.sdk.sms.ConfigurationUpdateEvent;
 import com.zebra.scannercontrol.DCSSDKDefs;
 import com.zebra.scannercontrol.DCSScannerInfo;
 import com.zebra.scannercontrol.FirmwareUpdateEvent;
@@ -84,13 +84,7 @@ class ScannerHandler implements IDcsSdkApiDelegate {
     @Override
     public void dcssdkEventAuxScannerAppeared(DCSScannerInfo dcsScannerInfo, DCSScannerInfo dcsScannerInfo1) {
     }
-
-    @Override
-    public void dcssdkEventConfigurationUpdate(ConfigurationUpdateEvent configurationUpdateEvent) {
-
-    }
-
-
+    
     //
     //  Activity life cycle behavior
     //
@@ -118,14 +112,6 @@ class ScannerHandler implements IDcsSdkApiDelegate {
 
         sdkHandler = new SDKHandler(context, true);
 
-        //For cdc device
-        //DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
-
-        //For bluetooth device
-        //DCSSDKDefs.DCSSDK_RESULT btResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE);
-        DCSSDKDefs.DCSSDK_RESULT btNormalResult = sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL);
-
-
         //Log.d(TAG,btNormalResult+ " results "+ btResult);
         sdkHandler.dcssdkSetDelegate(this);
 
@@ -146,9 +132,7 @@ class ScannerHandler implements IDcsSdkApiDelegate {
         sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
 
 
-        ArrayList<DCSScannerInfo> availableScanners = new ArrayList<>();
-        availableScanners = (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
-
+        ArrayList<DCSScannerInfo> availableScanners = getAllAvailableScanners();
         if (availableScanners != null && availableScanners.size() > 0) {
             try {
                 scannerID = availableScanners.get(0).getScannerID();
@@ -158,6 +142,52 @@ class ScannerHandler implements IDcsSdkApiDelegate {
             }
         } else
             Log.d(TAG, "Available scanners null");
+    }
+
+    public boolean hasDetectedScanner()
+    {
+        return scannerID != -1;
+    }
+
+    private ArrayList<DCSScannerInfo> getAllAvailableScanners()
+    {
+        ArrayList<DCSScannerInfo> allAvailableScanners = new ArrayList<>();
+        allAvailableScanners.addAll(getScannersForMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC));
+        allAvailableScanners.addAll(getScannersForMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_SNAPI));
+        if(isBluetoothActive()) {
+            allAvailableScanners.addAll(getScannersForMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_LE));
+            allAvailableScanners.addAll(getScannersForMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL));
+        }
+        return allAvailableScanners;
+    }
+
+    private ArrayList<DCSScannerInfo> getScannersForMode(DCSSDKDefs.DCSSDK_MODE mode)
+    {
+        DCSSDKDefs.DCSSDK_RESULT result = sdkHandler.dcssdkSetOperationalMode(mode);
+        if(result == DCSSDKDefs.DCSSDK_RESULT.DCSSDK_RESULT_SUCCESS) {
+            return (ArrayList<DCSScannerInfo>) sdkHandler.dcssdkGetAvailableScannersList();
+        }
+        return new ArrayList<>();
+    }
+
+    private boolean isBluetoothActive() {
+        // 1. Get the default Bluetooth Adapter
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        // 2. Check for device Bluetooth support
+        if (bluetoothAdapter == null) {
+            // Device doesn't support Bluetooth
+            return false;
+        } else {
+            // 3. Check if Bluetooth is enabled
+            if (bluetoothAdapter.isEnabled()) {
+                // Bluetooth is ON
+                return true;
+            } else {
+                // Bluetooth is OFF
+                return false;
+            }
+        }
     }
 
     private synchronized void disconnect() {

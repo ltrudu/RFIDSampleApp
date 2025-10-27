@@ -206,6 +206,12 @@ final static String TAG = "RFID_HANDLER";
                     readers.setTransport(ENUM_TRANSPORT.RE_SERIAL);
                     availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
                 }
+                if(availableRFIDReaderList.isEmpty())
+                {
+                    Log.d(TAG, "Reader not available in RE_SERIAL Transport trying with ALL transports");
+                    readers.setTransport(ENUM_TRANSPORT.ALL);
+                    availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+                }
             } catch (InvalidUsageException e) {
                 invalidUsageException = e;
                 e.printStackTrace();
