@@ -63,6 +63,7 @@ public class TagInventoryActivity extends AppCompatActivity {
     RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
     public static boolean bAllowLocationing = true;
+    public static boolean bAllowReadWrite = true;
 
     ActivityResultLauncher<Intent> resultLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -93,10 +94,10 @@ public class TagInventoryActivity extends AppCompatActivity {
         clQuestion.setVisibility(View.GONE);
 
         String model = Build.MODEL;
-        if(model.equalsIgnoreCase("EM45") == true)
+        if(model.equalsIgnoreCase("EM45") == true || model.equalsIgnoreCase("TC53E") == true)
         {
             bAllowLocationing = false;
-            findViewById(R.id.btScanActivity).setVisibility(View.GONE);
+            //findViewById(R.id.btScanActivity).setVisibility(View.GONE);
         }
 
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
@@ -155,6 +156,16 @@ public class TagInventoryActivity extends AppCompatActivity {
                 b.putString("TagID", epc); //Your id
                 intent.putExtras(b); //Put your id to your next Intent
                 resultLauncher.launch(intent);
+            }
+        }, new TagDataAdapter.OnItemClickListener() {
+            @Override
+            public void onClickItem(int position, String epc) {
+                Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(TagInventoryActivity.this, TagReadUserMemoryActivity.class);
+                Bundle b = new Bundle();
+                b.putString("TagID", epc); //Your id
+                intent.putExtras(b); //Put your id to your next Intent
+                startActivity(intent);
             }
         });
         mTagDataRecyclerView.setAdapter(mTagDataAdapter);
@@ -465,13 +476,29 @@ public class TagInventoryActivity extends AppCompatActivity {
             {
                 mTagDataList.get(tagIndex).mTagID = tagData[index].getTagID();
                 mTagDataList.get(tagIndex).mRssi = tagData[index].getPeakRSSI();
-                Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
-                Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
+                if(tagData[index].getMemoryBankData().length() > 0) {
+                    Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
+                    Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
+                    mTagDataList.get(tagIndex).mbHasUserMemory = true;
+                }
+                else
+                {
+                    mTagDataList.get(tagIndex).mbHasUserMemory = false;
+                }
                 itemchanged.add(index);
             }
             else
             {
                 TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
+                if(tagData[index].getMemoryBankData().length() > 0) {
+                    Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
+                    Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
+                    newData.mbHasUserMemory = true;
+                }
+                else
+                {
+                    newData.mbHasUserMemory = false;
+                }
                 mTagDataList.add(newData);
                 notifyAllSetChanged = true;
                 runOnUiThread(new Runnable() {

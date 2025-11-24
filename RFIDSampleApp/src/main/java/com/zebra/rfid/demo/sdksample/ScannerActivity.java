@@ -1,5 +1,6 @@
 package com.zebra.rfid.demo.sdksample;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -65,14 +66,19 @@ public class ScannerActivity extends AppCompatActivity {
         findViewById(R.id.btScan).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MainApplication.scannerHandler.pullTrigger();
+                if(MainApplication.scannerHandler != null && MainApplication.scannerHandler.hasDetectedScanner())
+                    MainApplication.scannerHandler.pullTrigger();
+                else if(isUsingDatawedge)
+                {
+                    TriggerDWScanner();
+                }
             }
         });
 
         if(mScrollDownHandler == null)
             mScrollDownHandler = new Handler(Looper.getMainLooper());
 
-        if(MainApplication.scannerHandler.hasDetectedScanner()) {
+        if(MainApplication.scannerHandler != null && MainApplication.scannerHandler.hasDetectedScanner()) {
             // We can use the scannerHandler to manage the scanner of this device
             rfidHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
                 @Override
@@ -115,7 +121,7 @@ public class ScannerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(MainApplication.scannerHandler.hasDetectedScanner()) {
+        if(MainApplication.scannerHandler != null && MainApplication.scannerHandler.hasDetectedScanner()) {
             MainApplication.scannerHandler.onResume(new ScannerHandler.ScannerHandlerInterface() {
                 @Override
                 public void onBarcodeData(String val, int symbo) {
@@ -195,6 +201,12 @@ public class ScannerActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void TriggerDWScanner()
+    {
+
+    }
+
 
     private void registerDWReceiverAndStartReceive()
     {

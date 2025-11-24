@@ -70,7 +70,8 @@ public class MainApplication extends Application {
                                             }
                                             // Initialize rfidHandler and scannerHandler now that we have permissions
                                             rfidHandler = new RFIDHandler();
-                                            scannerHandler = new ScannerHandler(MainApplication.this);
+                                            if(model.contains("EM45") == false)
+                                                scannerHandler = new ScannerHandler(MainApplication.this);
                                         }
 
                                         @Override

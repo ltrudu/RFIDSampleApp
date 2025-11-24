@@ -18,6 +18,7 @@ import com.zebra.datawedgeprofileintents.DWProfileCommandBase;
 import com.zebra.datawedgeprofileintents.DWScanReceiver;
 import com.zebra.datawedgeprofileintents.DWScannerStartScan;
 import com.zebra.rfid.api3.MEMORY_BANK;
+import com.zebra.rfid.api3.TagData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
     MEMORY_BANK memoryBank = MEMORY_BANK.MEMORY_BANK_USER;
 
     protected static ScannerHandler scannerHandler;
-
+    RFIDHandler.RFIDHandlerInterface mHandlerInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +67,51 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
         rvBarcodesList.setAdapter(mBarcodeDataAdapter);
         rvBarcodesList.setLayoutManager(new LinearLayoutManager(this));
 
-        Button btClear = findViewById(R.id.btClear);
-        btClear.setOnClickListener(new View.OnClickListener() {
+        mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
+            @Override
+            public void onReaderConnected(String message) {
+                MainApplication.rfidHandler.ConfigureReaderForReadWrite();
+                readDataOnTag();
+            }
+
+            @Override
+            public void onReaderDisconnected() {
+
+            }
+
+            @Override
+            public void onTagData(TagData[] tagData) {
+
+            }
+
+            @Override
+            public void onMessage(String message) {
+
+            }
+
+            @Override
+            public void handleTriggerPress(boolean press) {
+
+            }
+        };
+
+        Button clearBarcodes = findViewById(R.id.bt_clearbarcodes);
+        clearBarcodes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mBarcodeDataModelArrayList.clear();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBarcodeDataAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        });
+
+
+        Button btClearTag = findViewById(R.id.btClear);
+        btClearTag.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 MainApplication.rfidHandler.writeData(mTagID,  "", memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
@@ -92,6 +136,14 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
             }
         });
 
+        Button btRead = findViewById(R.id.bt_readTag);
+        btRead.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                readDataOnTag();
+            }
+        });
+
         Button btWrite = findViewById(R.id.btWriteATag);
         btWrite.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,6 +155,14 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                     }
                     // Remove leading FF
                     dataToWrite = dataToWrite.substring(0, dataToWrite.length()-2);
+
+                    TagReadUserMemoryActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvUserMemory.setText("Writing data on TAG");
+                        }
+                    });
+
                     MainApplication.rfidHandler.writeData(mTagID, dataToWrite, memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
                         @Override
                         public void onSuccess(String tagID) {
@@ -161,22 +221,16 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                 new DWScanReceiver.onScannedData() {
                     @Override
                     public void scannedData(String source, String data, String symbo) {
-                        if(mBarcodeDataModelArrayList.size() <= 7 && symbo.equalsIgnoreCase("EAN13")) {
-                            BarcodeDataModel model = new BarcodeDataModel(data);
-                            mBarcodeDataModelArrayList.add(model);
-                            rvBarcodesList.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mBarcodeDataAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-                        else
-                        {
-                            if(Looper.myLooper() == null)
-                                Looper.prepare();
-                            Toast.makeText(TagReadUserMemoryActivity.this, "Too many barcodes.", Toast.LENGTH_SHORT).show();
-                        }
+                            if(symbo.equalsIgnoreCase("EAN13")) {
+                                BarcodeDataModel model = new BarcodeDataModel(data);
+                                mBarcodeDataModelArrayList.add(model);
+                                TagReadUserMemoryActivity.this.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mBarcodeDataAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
                     }
                 }
         );
@@ -185,52 +239,78 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        readDataOnTag();
-        mScanReceiver.startReceive();
-        scannerHandler.onResume(new ScannerHandler.ScannerHandlerInterface() {
-            @Override
-            public void onBarcodeData(String val, int symbo) {
-                if(mBarcodeDataModelArrayList.size() <= 7 && symbo == 11) {
-                    BarcodeDataModel model = new BarcodeDataModel(val);
-                    mBarcodeDataModelArrayList.add(model);
-                    rvBarcodesList.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mBarcodeDataAdapter.notifyDataSetChanged();
-                        }
-                    });
-                }
-                else
-                {
-                    if(Looper.myLooper() == null)
-                        Looper.prepare();
-                    Toast.makeText(TagReadUserMemoryActivity.this, "Too many barcodes.", Toast.LENGTH_SHORT).show();
-                }
+        MainApplication.rfidHandler.onResume(mHandlerInterface);
+        if(scannerHandler != null && scannerHandler.hasDetectedScanner()) {
+            scannerHandler.onResume(new ScannerHandler.ScannerHandlerInterface() {
+                @Override
+                public void onBarcodeData(String val, int symbo) {
+                    if (mBarcodeDataModelArrayList.size() <= 7 && symbo == 11) {
+                        BarcodeDataModel model = new BarcodeDataModel(val);
+                        mBarcodeDataModelArrayList.add(model);
+                        rvBarcodesList.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mBarcodeDataAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    } else {
+                        if (Looper.myLooper() == null)
+                            Looper.prepare();
+                        Toast.makeText(TagReadUserMemoryActivity.this, "Too many barcodes.", Toast.LENGTH_SHORT).show();
+                    }
 
-            }
-        });
+                }
+            });
+        }
+        else
+        {
+            mScanReceiver.startReceive();
+        }
     }
 
     @Override
     protected void onPause() {
-        mScanReceiver.stopReceive();
-        scannerHandler.onPause();
+        if(scannerHandler != null && scannerHandler.hasDetectedScanner())
+        {
+            scannerHandler.onPause();
+        }
+        else {
+            mScanReceiver.stopReceive();
+        }
+        MainApplication.rfidHandler.onPause();
         super.onPause();
     }
 
     private void readDataOnTag()
     {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tvUserMemory.setText("Reading data on TAG");
+            }
+        });
         MainApplication.rfidHandler.readData(mTagID, memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
             @Override
             public void onSuccess(String memoryRead) {
-                    tvUserMemory.setText(memoryRead);
-                    updateBarcodeList(memoryRead);
+                TagReadUserMemoryActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvUserMemory.setText(memoryRead);
+                    }
+                });
+                updateBarcodeList(memoryRead);
             }
 
             @Override
             public void onError(String errorMessage) {
-                tvUserMemory.setText(errorMessage);
-                updateBarcodeList("51651616FF6516516FF5184651FF65165468FF65164684FF65131351FF35153431");
+                TagReadUserMemoryActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(errorMessage != null)
+                            tvUserMemory.setText(errorMessage);
+                        else
+                            tvUserMemory.setText("Can\'t read user memory.");                    }
+                });
             }
         });
     }
@@ -238,12 +318,16 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
     private void updateBarcodeList(String userData)
     {
         mBarcodeDataModelArrayList.clear();
-        List<String> barcodeList = Arrays.asList(userData.split("FF"));
-        if(barcodeList.size() != 0)
-        {
-            for (String barcode : barcodeList) {
-                BarcodeDataModel model = new BarcodeDataModel(barcode);
-                mBarcodeDataModelArrayList.add(model);
+        if(userData.contains("FF") == true) {
+            List<String> barcodeList = Arrays.asList(userData.split("FF"));
+            if (barcodeList.size() != 0) {
+                for (String barcode : barcodeList) {
+                    if(barcode.length() == 13) // We only keep ean13
+                    {
+                        BarcodeDataModel model = new BarcodeDataModel(barcode);
+                        mBarcodeDataModelArrayList.add(model);
+                    }
+                }
             }
         }
         rvBarcodesList.post(new Runnable() {

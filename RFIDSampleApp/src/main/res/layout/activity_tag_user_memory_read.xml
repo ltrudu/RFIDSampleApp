@@ -48,18 +48,25 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/btClear"
+                android:id="@+id/bt_readTag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Clear" />
+                android:text="Read Tag" />
 
             <Button
                 android:id="@+id/btWriteATag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Write" />
+                android:text="Write Tag" />
+
+            <Button
+                android:id="@+id/btClear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Clear Tag" />
         </LinearLayout>
 
         <Button
@@ -68,6 +75,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="DataWedge Scan" />
+
+        <Button
+            android:id="@+id/bt_clearbarcodes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Clear Barcodes" />
 
     </LinearLayout>
 

@@ -1,6 +1,5 @@
 package com.zebra.rfid.demo.sdksample;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -24,16 +23,18 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
     private List<TagDataModel> mTagData;
 
     private final OnItemClickListener mItemLocateClickListener;
+    private final OnItemClickListener mItemReadWriteClickListener;
 
     public TagDataAdapter(List<TagDataModel> tagData)
     {
-        this(tagData, null);
+        this(tagData, null, null);
     }
 
-    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemLocateClickListener)
+    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickListener)
     {
         mTagData = tagData;
-        mItemLocateClickListener = itemLocateClickListener;
+        this.mItemLocateClickListener = itemLocateClickListener;
+        this.mItemReadWriteClickListener = itemReadWriteClickListener;
     }
 
     @NonNull
@@ -46,7 +47,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         View contactView = inflater.inflate(R.layout.item_tagdata, parent, false);
 
         // Return a new holder instance
-        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemLocateClickListener);
+        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemLocateClickListener, mItemReadWriteClickListener);
         return viewHolder;
     }
 
@@ -64,6 +65,11 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         else
         {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        if(data.getHasUserMemory())
+        {
+            holder.itemView.setBackgroundColor(Color.GREEN);
         }
     }
 
@@ -92,13 +98,15 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         public TextView mEPC;
         public TextView mRssi;
 
-        Button btLocateClickListener;
+        Button btLocate;
+        Button btReadWrite;
 
         private OnItemClickListener itemLocateClickListener;
+        private OnItemClickListener itemReadWriteClickLister;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
-        public TagDataViewHolder(View itemView, OnItemClickListener itemLocateClickListener) {
+        public TagDataViewHolder(View itemView, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickLister) {
             // Stores the itemView in a public final member variable that can be used
             // to access the context from any TagDataViewHolder instance.
             super(itemView);
@@ -106,13 +114,15 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
             mEPC = (TextView) itemView.findViewById(R.id.tv_epc);
             mRssi = (TextView) itemView.findViewById(R.id.tv_rssi);
 
-            btLocateClickListener = (Button)itemView.findViewById(R.id.bt_locate);
+            btLocate = (Button)itemView.findViewById(R.id.bt_locate);
+            btReadWrite = (Button)itemView.findViewById(R.id.bt_write);
 
             this.itemLocateClickListener = itemLocateClickListener;
+            this.itemReadWriteClickLister = itemReadWriteClickLister;
 
             if(itemLocateClickListener != null)
             {
-                btLocateClickListener.setOnClickListener(new View.OnClickListener() {
+                btLocate.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         itemLocateClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
@@ -120,9 +130,27 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
                 });
             }
 
+            if(TagInventoryActivity.bAllowReadWrite == false)
+            {
+                btReadWrite.setVisibility(View.GONE);
+            }
+            else
+            {
+                btReadWrite.setVisibility(View.VISIBLE);
+                if(itemReadWriteClickLister != null)
+                {
+                    btReadWrite.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            itemReadWriteClickLister.onClickItem(getAdapterPosition(), mEPC.getText().toString());
+                        }
+                    });
+                }
+            }
+
             if(TagInventoryActivity.bAllowLocationing == false)
             {
-                btLocateClickListener.setVisibility(View.GONE);
+                btLocate.setVisibility(View.GONE);
             }
         }
     }
