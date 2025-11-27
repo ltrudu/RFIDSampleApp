@@ -879,7 +879,7 @@ final static String TAG = "RFID_HANDLER";
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
-                config.setTari(0);
+                config.setTari(18800);
 
                 reader.Config.setUniqueTagReport(false);
 
@@ -888,7 +888,7 @@ final static String TAG = "RFID_HANDLER";
                 Antennas.SingulationControl s1_singulationControl = reader.Config.Antennas.getSingulationControl(1);
                 // TODO: Sessions are defined by the EPCglobal Gen2 (ISO 18000-6C) standard, which governs how RFID tags and readers interact.
                 s1_singulationControl.setSession(SESSION.SESSION_S0);
-                s1_singulationControl.Action.setInventoryState(INVENTORY_STATE.INVENTORY_STATE_A);
+                s1_singulationControl.Action.setInventoryState(INVENTORY_STATE.INVENTORY_STATE_AB_FLIP);
                 s1_singulationControl.Action.setSLFlag(SL_FLAG.SL_ALL);
                 reader.Config.Antennas.setSingulationControl(1, s1_singulationControl);
                 // delete any prefilters
