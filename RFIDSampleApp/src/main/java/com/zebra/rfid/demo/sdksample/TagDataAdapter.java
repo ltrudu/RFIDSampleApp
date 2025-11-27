@@ -107,6 +107,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
         LinearLayout ll_userBank;
         TextView tv_userBank;
+        Button btCopy;
 
         private OnItemClickListener itemLocateClickListener;
         private OnItemClickListener itemReadWriteClickLister;
@@ -129,6 +130,9 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
             ll_userBank.setVisibility(View.GONE);
 
             tv_userBank = (TextView) itemView.findViewById(R.id.tv_userBank);
+
+            btCopy = (Button)itemView.findViewById(R.id.bt_copy);
+            btCopy.setVisibility(View.GONE); // disabled right now, TODO: implement copy to clipboard
 
             this.itemLocateClickListener = itemLocateClickListener;
             this.itemReadWriteClickLister = itemReadWriteClickLister;

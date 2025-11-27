@@ -879,7 +879,7 @@ final static String TAG = "RFID_HANDLER";
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
-                config.setTari(18800);
+                config.setTari(0);
 
                 reader.Config.setUniqueTagReport(false);
 
