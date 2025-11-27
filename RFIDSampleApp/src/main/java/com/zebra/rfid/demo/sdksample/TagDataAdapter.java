@@ -6,7 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -69,7 +72,8 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
         if(data.getHasUserMemory())
         {
-            holder.itemView.setBackgroundColor(Color.GREEN);
+            holder.ll_userBank.setVisibility(View.VISIBLE);
+            holder.tv_userBank.setText(data.getUserMemory());
         }
     }
 
@@ -101,6 +105,9 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         Button btLocate;
         Button btReadWrite;
 
+        LinearLayout ll_userBank;
+        TextView tv_userBank;
+
         private OnItemClickListener itemLocateClickListener;
         private OnItemClickListener itemReadWriteClickLister;
 
@@ -116,6 +123,12 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
             btLocate = (Button)itemView.findViewById(R.id.bt_locate);
             btReadWrite = (Button)itemView.findViewById(R.id.bt_write);
+
+            ll_userBank = (LinearLayout)itemView.findViewById(R.id.ll_userBank);
+            // Gone by default
+            ll_userBank.setVisibility(View.GONE);
+
+            tv_userBank = (TextView) itemView.findViewById(R.id.tv_userBank);
 
             this.itemLocateClickListener = itemLocateClickListener;
             this.itemReadWriteClickLister = itemReadWriteClickLister;

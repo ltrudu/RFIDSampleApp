@@ -2,11 +2,13 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.zebra.rfid.api3.ACCESS_OPERATION_CODE;
 import com.zebra.rfid.api3.ACCESS_OPERATION_STATUS;
+import com.zebra.rfid.api3.AntennaInfo;
 import com.zebra.rfid.api3.Antennas;
 import com.zebra.rfid.api3.DYNAMIC_POWER_OPTIMIZATION;
 import com.zebra.rfid.api3.ENUM_TRANSPORT;
@@ -28,10 +30,13 @@ import com.zebra.rfid.api3.SL_FLAG;
 import com.zebra.rfid.api3.START_TRIGGER_TYPE;
 import com.zebra.rfid.api3.STATUS_EVENT_TYPE;
 import com.zebra.rfid.api3.STOP_TRIGGER_TYPE;
+import com.zebra.rfid.api3.TAG_FIELD;
 import com.zebra.rfid.api3.TagAccess;
 import com.zebra.rfid.api3.TagData;
+import com.zebra.rfid.api3.TagStorageSettings;
 import com.zebra.rfid.api3.TriggerInfo;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 
@@ -429,13 +434,18 @@ final static String TAG = "RFID_HANDLER";
                 // tag event with tag data
                 reader.Events.setTagReadEvent(true);
                 reader.Events.setAttachTagDataWithReadEvent(true);
-                // set trigger mode as rfid so scanner beam will not come
-                reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.RFID_MODE, false);
-                // set start and stop triggers
-                reader.Config.setStartTrigger(triggerInfo.StartTrigger);
-                reader.Config.setStopTrigger(triggerInfo.StopTrigger);
+
+                if(MainApplication.model.contains("TC53E") == false) {
+                    // set trigger mode as rfid so scanner beam will not come
+                    reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.RFID_MODE, false);
+
+                    // set start and stop triggers
+                    reader.Config.setStartTrigger(triggerInfo.StartTrigger);
+                    reader.Config.setStopTrigger(triggerInfo.StopTrigger);
+                }
                 // power levels are index based so maximum power supported get the last one
                 MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
 
@@ -457,7 +467,7 @@ final static String TAG = "RFID_HANDLER";
                 reader.Config.Antennas.setSingulationControl(1, s1_singulationControl);
                 // delete any prefilters
                 reader.Actions.PreFilters.deleteAll();
-                //
+
             } catch (InvalidUsageException | OperationFailureException e) {
                 e.printStackTrace();
             }
@@ -818,8 +828,93 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
+    synchronized void performInventoryWithMemoryBankAccess() {
+        Log.d(TAG, "PerformInventoryWithMemoryBankAccess " + reader.getHostName());
+        if (reader.isConnected()) {
+            TriggerInfo triggerInfo = new TriggerInfo();
+            triggerInfo.StartTrigger.setTriggerType(START_TRIGGER_TYPE.START_TRIGGER_TYPE_IMMEDIATE);
+            triggerInfo.StopTrigger.setTriggerType(STOP_TRIGGER_TYPE.STOP_TRIGGER_TYPE_IMMEDIATE);
+
+            try {
+                // receive events from reader
+                if (eventHandler == null) {
+                    eventHandler = new EventHandler();
+                    reader.Events.addEventsListener(eventHandler);
+                }
+                else
+                {
+                    reader.Events.removeEventsListener(eventHandler);
+                    eventHandler = new EventHandler();
+                    reader.Events.addEventsListener(eventHandler);
+                }
+
+                // HH event
+                reader.Events.setHandheldEvent(true);
+                // tag event with tag data
+                reader.Events.setTagReadEvent(true);
+                reader.Events.setAttachTagDataWithReadEvent(true);
+
+                if(MainApplication.model.contains("TC53E") == false) {
+                    // set trigger mode as rfid so scanner beam will not come
+                    reader.Config.setTriggerMode(ENUM_TRIGGER_MODE.RFID_MODE, false);
+
+                    // set start and stop triggers
+                    reader.Config.setStartTrigger(triggerInfo.StartTrigger);
+                    reader.Config.setStopTrigger(triggerInfo.StopTrigger);
+                }
+                // power levels are index based so maximum power supported get the last one
+                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+
+                // Setup tag storage settings to retrieve user memory bank
+                TagStorageSettings tagStorageSettings = new TagStorageSettings();
+                //TagStorageSettings tagStorageSettings = reader.Config.getTagStorageSettings();
+                tagStorageSettings.setTagFields(TAG_FIELD.ALL_TAG_FIELDS);
+                tagStorageSettings.setMaxMemoryBankByteCount(32);
+                reader.Config.setTagStorageSettings(tagStorageSettings);
+
+                // set antenna configurations
+                Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
+
+                //TODO: Check documentation
+                // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
+                config.setTransmitPowerIndex(MAX_POWER);
+                config.setrfModeTableIndex(0);
+                config.setTari(0);
+
+                reader.Config.setUniqueTagReport(false);
+
+                reader.Config.Antennas.setAntennaRfConfig(1, config);
+                // Set the singulation control
+                Antennas.SingulationControl s1_singulationControl = reader.Config.Antennas.getSingulationControl(1);
+                // TODO: Sessions are defined by the EPCglobal Gen2 (ISO 18000-6C) standard, which governs how RFID tags and readers interact.
+                s1_singulationControl.setSession(SESSION.SESSION_S0);
+                s1_singulationControl.Action.setInventoryState(INVENTORY_STATE.INVENTORY_STATE_A);
+                s1_singulationControl.Action.setSLFlag(SL_FLAG.SL_ALL);
+                reader.Config.Antennas.setSingulationControl(1, s1_singulationControl);
+                // delete any prefilters
+                reader.Actions.PreFilters.deleteAll();
+
+                // Setup tag access to try loading memory bank user
+                // Commented because it only works to setup readwait method
+                TagAccess tagAccess = new TagAccess();
+                TagAccess.ReadAccessParams readAccessParams = tagAccess.new ReadAccessParams();
+                readAccessParams.setCount(32); // Application.wordCount
+                readAccessParams.setOffset(0);
+                readAccessParams.setMemoryBank(MEMORY_BANK.MEMORY_BANK_USER);
+
+                // Setup reading of memory bank
+                short [] antenna = reader.Config.Antennas.getAvailableAntennas();
+                AntennaInfo antennaInfo = new AntennaInfo(antenna);
+                reader.Actions.TagAccess.readEvent(readAccessParams, null, antennaInfo);
+            } catch (InvalidUsageException | OperationFailureException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     synchronized void performInventory() {
         try {
+            ConfigureReaderForInventory();
             reader.Actions.Inventory.perform();
         } catch (InvalidUsageException e) {
             e.printStackTrace();

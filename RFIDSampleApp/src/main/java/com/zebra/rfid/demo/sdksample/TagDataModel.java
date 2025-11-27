@@ -12,7 +12,7 @@ public class TagDataModel {
 
     protected int mUniqueID;
 
-    protected boolean mbHasUserMemory = false;
+    protected String mUserMemory = null;
 
     public TagDataModel(String tagID, short rssi)
     {
@@ -37,5 +37,6 @@ public class TagDataModel {
         return mUniqueID;
     }
 
-    public boolean getHasUserMemory() { return mbHasUserMemory; }
+    public String getUserMemory() { return mUserMemory; }
+    public boolean getHasUserMemory() { return (mUserMemory != null && mUserMemory.length() > 0); }
 }

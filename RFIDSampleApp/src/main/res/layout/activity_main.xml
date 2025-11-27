@@ -48,6 +48,12 @@
                 android:text="TextView" />
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/cb_ReadUserMemory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Read User Memory" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -57,7 +63,7 @@
                 android:id="@+id/btStartInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:layout_marginTop="5dp"
                 android:layout_weight="1"
                 android:text="Start Inventory"
                 android:textSize="10sp" />
@@ -66,7 +72,7 @@
                 android:id="@+id/btStopInventory"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:layout_marginTop="5dp"
                 android:layout_weight="1"
                 android:text="Stop Inventory"
                 android:textSize="10sp" />
@@ -83,7 +89,6 @@
                 android:id="@+id/ExportTXT"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:onClick="ExportTXT"
                 android:text="Export TXT"
@@ -95,10 +100,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_margin="5dp"
                 android:onClick="shareTo"
-                android:textSize="10sp"
-                android:text="Share To" />
+                android:text="Share To"
+                android:textSize="10sp" />
 
         </LinearLayout>
 
@@ -106,10 +110,8 @@
             android:id="@+id/btScanActivity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:textSize="10sp"
             android:text="Scan Activity"
-        />
+            android:textSize="10sp" />
 
     </LinearLayout>
 

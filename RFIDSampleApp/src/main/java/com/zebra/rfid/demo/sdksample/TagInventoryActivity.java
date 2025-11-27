@@ -23,6 +23,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +53,7 @@ import java.util.HashMap;
 public class TagInventoryActivity extends AppCompatActivity {
 
     private TextView statusTextViewRFID = null;
+    private CheckBox cbReadUserMemory = null;
 
     private static final int BLUETOOTH_PERMISSION_REQUEST_CODE = 100;
 
@@ -64,6 +67,8 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public static boolean bAllowLocationing = true;
     public static boolean bAllowReadWrite = true;
+
+    private boolean bReadUserMemory = false;
 
     ActivityResultLauncher<Intent> resultLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -87,6 +92,17 @@ public class TagInventoryActivity extends AppCompatActivity {
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);
         //rfidHandler.onCreate(this);
 
+        cbReadUserMemory = findViewById(R.id.cb_ReadUserMemory);
+        cbReadUserMemory.setChecked(bReadUserMemory);
+        cbReadUserMemory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                bReadUserMemory = b;
+                if(MainApplication.rfidHandler != null)
+                    MainApplication.rfidHandler.stopInventory();
+            }
+        });
+
         tvNbItems = findViewById(R.id.tvNbItems);
         tvNbItems.setText("0");
 
@@ -103,7 +119,6 @@ public class TagInventoryActivity extends AppCompatActivity {
         mHandlerInterface = new RFIDHandler.RFIDHandlerInterface() {
             @Override
             public void onReaderConnected(String message) {
-                MainApplication.rfidHandler.ConfigureReaderForInventory();
                 statusTextViewRFID.setText(message);
             }
 
@@ -208,7 +223,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         findViewById(R.id.btStartInventory).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                StartInventory();
+                StartInventory(bReadUserMemory);
             }
         });
 
@@ -324,7 +339,7 @@ public class TagInventoryActivity extends AppCompatActivity {
         MainApplication.rfidHandler.onDestroy();
     }
 
-    public void StartInventory()
+    public void StartInventory(boolean withMemoryBank)
     {
         runOnUiThread(new Runnable() {
             @Override
@@ -337,12 +352,11 @@ public class TagInventoryActivity extends AppCompatActivity {
                 findViewById(R.id.btStopInventory).setEnabled(true);
             }
         });
-        MainApplication.rfidHandler.performInventory();
+        if(withMemoryBank)
+            MainApplication.rfidHandler.performInventoryWithMemoryBankAccess(); //performInventory();
+        else
+            MainApplication.rfidHandler.performInventory();
     }
-
-
-
-
 
     public void StopInventory(){
         MainApplication.rfidHandler.stopInventory();
@@ -479,11 +493,7 @@ public class TagInventoryActivity extends AppCompatActivity {
                 if(tagData[index].getMemoryBankData().length() > 0) {
                     Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
                     Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
-                    mTagDataList.get(tagIndex).mbHasUserMemory = true;
-                }
-                else
-                {
-                    mTagDataList.get(tagIndex).mbHasUserMemory = false;
+                    mTagDataList.get(tagIndex).mUserMemory = tagData[index].getMemoryBankData();
                 }
                 itemchanged.add(index);
             }
@@ -493,11 +503,7 @@ public class TagInventoryActivity extends AppCompatActivity {
                 if(tagData[index].getMemoryBankData().length() > 0) {
                     Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
                     Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
-                    newData.mbHasUserMemory = true;
-                }
-                else
-                {
-                    newData.mbHasUserMemory = false;
+                    newData.mUserMemory = tagData[index].getMemoryBankData();
                 }
                 mTagDataList.add(newData);
                 notifyAllSetChanged = true;
@@ -551,7 +557,7 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void handleTriggerPress(boolean pressed) {
         if (pressed) {
-            StartInventory();
+            StartInventory(bReadUserMemory);
         } else
             StopInventory();
     }
