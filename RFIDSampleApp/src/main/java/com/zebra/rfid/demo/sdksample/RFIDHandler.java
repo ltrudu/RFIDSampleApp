@@ -868,7 +868,7 @@ final static String TAG = "RFID_HANDLER";
                 // Setup tag storage settings to retrieve user memory bank
                 TagStorageSettings tagStorageSettings = new TagStorageSettings();
                 //TagStorageSettings tagStorageSettings = reader.Config.getTagStorageSettings();
-                tagStorageSettings.setTagFields(TAG_FIELD.ALL_TAG_FIELDS);
+                tagStorageSettings.setTagFields(TAG_FIELD.USER);
                 tagStorageSettings.setMaxMemoryBankByteCount(32);
                 reader.Config.setTagStorageSettings(tagStorageSettings);
 
@@ -878,7 +878,7 @@ final static String TAG = "RFID_HANDLER";
                 //TODO: Check documentation
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
-                config.setrfModeTableIndex(0);
+                config.setrfModeTableIndex(3);
                 config.setTari(0);
 
                 reader.Config.setUniqueTagReport(false);
