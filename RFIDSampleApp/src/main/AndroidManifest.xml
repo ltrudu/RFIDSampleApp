@@ -17,6 +17,8 @@
         <activity
             android:name=".TagReadUserMemoryActivity"
             android:exported="false" />
+        <activity android:name=".EPCWriteActivity"
+            android:exported="false" />
         <activity
             android:name=".TagLocateActivity"
             android:exported="false" />

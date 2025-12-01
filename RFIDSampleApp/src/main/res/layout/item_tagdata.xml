@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_weight="0.2"
+            android:layout_weight="0.08"
             android:text="TextView" />
 
         <Button
@@ -40,6 +40,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.01"
             android:text="R/W"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/bt_epc"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.01"
+            android:text="EPC"
             android:textSize="10sp" />
     </LinearLayout>
 

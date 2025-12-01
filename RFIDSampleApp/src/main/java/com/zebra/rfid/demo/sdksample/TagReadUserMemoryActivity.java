@@ -114,7 +114,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
         btClearTag.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MainApplication.rfidHandler.writeData(mTagID,  "", memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
+                MainApplication.rfidHandler.writeData(mTagID,  "", memoryBank, new RFIDHandler.TagAccessCallback() {
                     @Override
                     public void onSuccess(String tagID) {
                         Toast.makeText(TagReadUserMemoryActivity.this, "Data written with success for tag:" + tagID, Toast.LENGTH_LONG).show();
@@ -163,7 +163,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                         }
                     });
 
-                    MainApplication.rfidHandler.writeData(mTagID, dataToWrite, memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
+                    MainApplication.rfidHandler.writeData(mTagID, dataToWrite, memoryBank, new RFIDHandler.TagAccessCallback() {
                         @Override
                         public void onSuccess(String tagID) {
                             Toast.makeText(TagReadUserMemoryActivity.this, mBarcodeDataModelArrayList.size() + " barcodes written successfully to tag:" + mTagID, Toast.LENGTH_LONG).show();
@@ -289,7 +289,7 @@ public class TagReadUserMemoryActivity extends AppCompatActivity {
                 tvUserMemory.setText("Reading data on TAG");
             }
         });
-        MainApplication.rfidHandler.readData(mTagID, memoryBank, new RFIDHandler.TagUserMemoryAccessCallback() {
+        MainApplication.rfidHandler.readData(mTagID, memoryBank, new RFIDHandler.TagAccessCallback() {
             @Override
             public void onSuccess(String memoryRead) {
                 TagReadUserMemoryActivity.this.runOnUiThread(new Runnable() {

@@ -2,6 +2,7 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.health.connect.datatypes.CervicalMucusRecord;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,17 +28,19 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
     private final OnItemClickListener mItemLocateClickListener;
     private final OnItemClickListener mItemReadWriteClickListener;
+    private final OnItemClickListener mItemEPCClickListener;
 
     public TagDataAdapter(List<TagDataModel> tagData)
     {
-        this(tagData, null, null);
+        this(tagData, null, null, null);
     }
 
-    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickListener)
+    public TagDataAdapter(List<TagDataModel> tagData, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickListener, OnItemClickListener itemEPCClickListener)
     {
         mTagData = tagData;
         this.mItemLocateClickListener = itemLocateClickListener;
         this.mItemReadWriteClickListener = itemReadWriteClickListener;
+        this.mItemEPCClickListener = itemEPCClickListener;
     }
 
     @NonNull
@@ -50,7 +53,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
         View contactView = inflater.inflate(R.layout.item_tagdata, parent, false);
 
         // Return a new holder instance
-        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemLocateClickListener, mItemReadWriteClickListener);
+        TagDataViewHolder viewHolder = new TagDataViewHolder(contactView, mItemLocateClickListener, mItemReadWriteClickListener, mItemEPCClickListener);
         return viewHolder;
     }
 
@@ -104,6 +107,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
         Button btLocate;
         Button btReadWrite;
+        Button btEPC;
 
         LinearLayout ll_userBank;
         TextView tv_userBank;
@@ -111,10 +115,11 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
         private OnItemClickListener itemLocateClickListener;
         private OnItemClickListener itemReadWriteClickLister;
+        private OnItemClickListener itemEPCClickListener;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
-        public TagDataViewHolder(View itemView, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickLister) {
+        public TagDataViewHolder(View itemView, OnItemClickListener itemLocateClickListener, OnItemClickListener itemReadWriteClickLister, OnItemClickListener itemEPCClickListener) {
             // Stores the itemView in a public final member variable that can be used
             // to access the context from any TagDataViewHolder instance.
             super(itemView);
@@ -124,6 +129,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
             btLocate = (Button)itemView.findViewById(R.id.bt_locate);
             btReadWrite = (Button)itemView.findViewById(R.id.bt_write);
+            btEPC = (Button)itemView.findViewById(R.id.bt_epc);
 
             ll_userBank = (LinearLayout)itemView.findViewById(R.id.ll_userBank);
             // Gone by default
@@ -136,6 +142,7 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
 
             this.itemLocateClickListener = itemLocateClickListener;
             this.itemReadWriteClickLister = itemReadWriteClickLister;
+            this.itemEPCClickListener = itemEPCClickListener;
 
             if(itemLocateClickListener != null)
             {
@@ -153,9 +160,10 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
             }
             else
             {
-                btReadWrite.setVisibility(View.VISIBLE);
+
                 if(itemReadWriteClickLister != null)
                 {
+                    btReadWrite.setVisibility(View.VISIBLE);
                     btReadWrite.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -163,6 +171,25 @@ public class TagDataAdapter extends RecyclerView.Adapter<TagDataAdapter.TagDataV
                         }
                     });
                 }
+                else
+                {
+                    btReadWrite.setVisibility(View.GONE);
+                }
+            }
+
+            if(itemEPCClickListener != null)
+            {
+                btEPC.setVisibility(View.VISIBLE);
+                btEPC.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        itemEPCClickListener.onClickItem(getAdapterPosition(), mEPC.getText().toString());
+                    }
+                });
+            }
+            else
+            {
+                btEPC.setVisibility(View.GONE);
             }
 
             if(TagInventoryActivity.bAllowLocationing == false)

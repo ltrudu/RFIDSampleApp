@@ -182,6 +182,16 @@ public class TagInventoryActivity extends AppCompatActivity {
                 intent.putExtras(b); //Put your id to your next Intent
                 startActivity(intent);
             }
+        }, new TagDataAdapter.OnItemClickListener() {
+            @Override
+            public void onClickItem(int position, String epc) {
+                Toast.makeText(TagInventoryActivity.this, "Selected item:" + String.valueOf(position), Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(TagInventoryActivity.this, EPCWriteActivity.class);
+                Bundle b = new Bundle();
+                b.putString("TagID", epc); //Your id
+                intent.putExtras(b); //Put your id to your next Intent
+                startActivity(intent);
+            }
         });
         mTagDataRecyclerView.setAdapter(mTagDataAdapter);
 

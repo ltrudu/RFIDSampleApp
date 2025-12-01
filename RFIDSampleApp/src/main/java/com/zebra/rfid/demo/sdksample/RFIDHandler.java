@@ -623,13 +623,13 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
-    public interface TagUserMemoryAccessCallback
+    public interface TagAccessCallback
     {
         void onSuccess(String tagID);
         void onError(String errorMessage);
     }
 
-    synchronized void readData(String tagID, MEMORY_BANK memoryBank, TagUserMemoryAccessCallback readDataCallback)
+    synchronized void readData(String tagID, MEMORY_BANK memoryBank, TagAccessCallback readDataCallback)
     {
         try {
             TagAccess tagAccess = new TagAccess();
@@ -755,7 +755,7 @@ final static String TAG = "RFID_HANDLER";
         return result.toString();
     }
 
-    synchronized void writeData(String tagID, String writeData,MEMORY_BANK memoryBank,TagUserMemoryAccessCallback readDataCallback)
+    synchronized void writeData(String tagID, String writeData,MEMORY_BANK memoryBank,TagAccessCallback readDataCallback)
     {
         String dataToWrite = writeData;
         if(memoryBank == MEMORY_BANK.MEMORY_BANK_USER) {
@@ -783,7 +783,16 @@ final static String TAG = "RFID_HANDLER";
 
 
         // Write user memory bank data
-        TagData tagData = null;
+        TagData tagData = new TagData();
+        if(memoryBank == MEMORY_BANK.MEMORY_BANK_EPC) {
+            tagData.setMemoryBank(MEMORY_BANK.MEMORY_BANK_EPC);
+            tagData.setTagID(writeData);
+        }
+        else if(memoryBank == MEMORY_BANK.MEMORY_BANK_USER)
+        {
+                tagData.setMemoryBank(MEMORY_BANK.MEMORY_BANK_USER);
+                tagData.setMemoryBankData(writeData);
+        }
         TagAccess tagAccess = new TagAccess();
         TagAccess.WriteAccessParams writeAccessParams = tagAccess.new WriteAccessParams();
         writeAccessParams.setAccessPassword(0);
@@ -825,6 +834,93 @@ final static String TAG = "RFID_HANDLER";
                 e.printStackTrace();
             }
 
+        }
+    }
+
+    synchronized public void writeNewEpc(String originalEpcHex, String newEpcHex, String accessPasswordHex, TagAccessCallback accessCallback) {
+        if (reader == null || !reader.isConnected()) {
+            if(accessCallback != null)
+            {
+                accessCallback.onError("Error: Reader is not connected.");
+                return;
+            }
+        }
+
+        try {
+            // 1. Prepare the Write Access Parameters
+            TagAccess tagAccess = new TagAccess();
+            TagAccess.WriteAccessParams writeAccessParams = tagAccess.new WriteAccessParams();
+
+            // The target memory bank is EPC
+            writeAccessParams.setMemoryBank(MEMORY_BANK.MEMORY_BANK_EPC);
+
+            // The EPC memory usually starts at word offset 2 (or 4 bytes) to skip the PC word.
+            // Check your tag's specific implementation, but 2 is common for EPC.
+            final int EPC_OFFSET_WORDS = 2;
+            writeAccessParams.setOffset(EPC_OFFSET_WORDS);
+
+            // The data to be written (must be a Hex string)
+            writeAccessParams.setWriteData(newEpcHex);
+
+            // Calculate data length in 16-bit words (Hex string length / 4)
+            // e.g., 24 hex digits (96 bits) = 6 words. New EPC is typically 24 hex digits.
+            // We use integer division here.
+            writeAccessParams.setWriteDataLength(newEpcHex.length() / 4);
+
+            // Set the optional access password
+            // The password must be provided as a 32-bit (4-byte / 8-hex-digit) value.
+            // Using Long.parseLong to handle the hexadecimal string conversion.
+            if(accessPasswordHex != null && accessPasswordHex.length() > 0) {
+                long passwordValue = Long.parseLong(accessPasswordHex, 16);
+                writeAccessParams.setAccessPassword(passwordValue);
+            }
+
+            // 2. Perform the Synchronous Write Operation
+            // IMPORTANT: The originalEpcHex is passed as the first parameter (tagID).
+            // This acts as the filter to target only the desired tag.
+            TagData tagData = new TagData();
+
+            // Stop inventory (best practice before an access operation)
+            reader.Actions.Inventory.stop();
+            Log.d(TAG, "Inventory stopped before write operation.");
+
+            // Uncomment the line below if you need to disable Dynamic Power Optimization (DPO)
+            // on devices like the RFD8500 before a write operation.
+            // reader.Config.setDPOState(DYNAMIC_POWER_OPTIMIZATION.DISABLE);
+
+            // The writeWait call, providing the original tagID to ensure singulation.
+            reader.Actions.TagAccess.writeWait(
+                    originalEpcHex,                 // tagID (The target tag's current EPC)
+                    writeAccessParams,              // The parameters defining the write
+                    null,                           // AntennaInfo (null means use default/all)
+                    tagData                         // TagData object to hold the result
+            );
+
+            // 3. Check the Result
+            if (tagData.getOpStatus() == ACCESS_OPERATION_STATUS.ACCESS_SUCCESS) {
+                if(accessCallback != null)
+                  accessCallback.onSuccess(String.format("SUCCESS: New EPC '%s' written to tag '%s'.", newEpcHex, originalEpcHex));
+            } else {
+                // OperationFailureException is often thrown for errors, but check OpStatus too.
+                accessCallback.onError(String.format("FAILURE: Write failed. Status: %s.", tagData.getOpStatus().toString()));
+            }
+
+        } catch (InvalidUsageException ex) {
+            Log.e(TAG, "Invalid Usage Exception", ex);
+            if(accessCallback != null)
+                accessCallback.onError("Error: Invalid usage of SDK. Details: " + ex.getMessage());
+        } catch (OperationFailureException ex) {
+            Log.e(TAG, "Operation Failure Exception", ex);
+            if(accessCallback != null)
+                accessCallback.onError(String.format("Error: Operation failed on the reader. Details: %s", ex.getVendorMessage()));
+        } catch (NumberFormatException ex) {
+            Log.e(TAG, "Number Format Exception", ex);
+            if(accessCallback != null)
+                accessCallback.onError("Error: Invalid hexadecimal format provided for EPC or Password.");
+        } catch (Exception ex) {
+            Log.e(TAG, "Unexpected error", ex);
+            if(accessCallback != null)
+                accessCallback.onError("An unexpected error occurred: " + ex.getMessage());
         }
     }
 

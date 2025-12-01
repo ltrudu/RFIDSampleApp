@@ -106,12 +106,18 @@
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btScanActivity"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Scan Activity"
-            android:textSize="10sp" />
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btScanActivity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:text="Scan Activity"
+                android:textSize="10sp" />
+        </LinearLayout>
 
     </LinearLayout>
 
