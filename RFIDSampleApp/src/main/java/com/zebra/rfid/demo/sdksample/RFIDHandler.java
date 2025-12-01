@@ -19,6 +19,7 @@ import com.zebra.rfid.api3.InvalidUsageException;
 import com.zebra.rfid.api3.MEMORY_BANK;
 import com.zebra.rfid.api3.OperationFailureException;
 import com.zebra.rfid.api3.RFIDReader;
+import com.zebra.rfid.api3.RFModes;
 import com.zebra.rfid.api3.ReaderDevice;
 import com.zebra.rfid.api3.Readers;
 import com.zebra.rfid.api3.RegulatoryConfig;
@@ -449,11 +450,14 @@ final static String TAG = "RFID_HANDLER";
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
 
+                RFModes modes = reader.ReaderCapabilities.RFModes;
+
                 //TODO: Check documentation
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
                 config.setTransmitPowerIndex(MAX_POWER);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
+                config.setTransmitFrequencyIndex(0);
 
                 reader.Config.setUniqueTagReport(false);
 
