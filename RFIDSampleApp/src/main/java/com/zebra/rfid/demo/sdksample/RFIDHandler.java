@@ -282,6 +282,11 @@ final static String TAG = "RFID_HANDLER";
         }
     }
 
+    public synchronized ArrayList<ReaderDevice> GetReaderList()
+    {
+        return availableRFIDReaderList != null ? availableRFIDReaderList : new ArrayList<>();
+    }
+
     private synchronized void GetAvailableReader() {
         Log.d(TAG, "GetAvailableReader");
         if (readers != null) {
@@ -952,7 +957,7 @@ final static String TAG = "RFID_HANDLER";
                 reader.Events.setHandheldEvent(true);
                 // tag event with tag data
                 reader.Events.setTagReadEvent(true);
-                reader.Events.setAttachTagDataWithReadEvent(true);
+                reader.Events.setAttachTagDataWithReadEvent(false);
 
                 if(MainApplication.model.contains("TC53E") == false) {
                     // set trigger mode as rfid so scanner beam will not come
@@ -981,7 +986,7 @@ final static String TAG = "RFID_HANDLER";
                 config.setrfModeTableIndex(3);
                 config.setTari(0);
 
-                reader.Config.setUniqueTagReport(false);
+                reader.Config.setUniqueTagReport(true);
 
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
                 // Set the singulation control
