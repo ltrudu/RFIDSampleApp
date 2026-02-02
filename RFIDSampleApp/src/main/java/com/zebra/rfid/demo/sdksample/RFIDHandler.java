@@ -284,30 +284,97 @@ final static String TAG = "RFID_HANDLER";
 
     public synchronized ArrayList<ReaderDevice> GetReaderList()
     {
+        if(availableRFIDReaderList == null)
+        {
+            GetAvailableReader(false);
+        }
         return availableRFIDReaderList != null ? availableRFIDReaderList : new ArrayList<>();
     }
 
-    private synchronized void GetAvailableReader() {
+    public synchronized ArrayList<String> getReadersListHostNames()
+    {
+        ArrayList<String> returnList = new ArrayList<>();
+        if(availableRFIDReaderList != null && !availableRFIDReaderList.isEmpty())
+        {
+            for(ReaderDevice device : availableRFIDReaderList)
+            {
+                returnList.add(device.getName());
+            }
+        }
+        return returnList;
+    }
+
+    public synchronized Boolean ConnectToRFIDReader(String name) throws InvalidUsageException, OperationFailureException {
+        if(name.isEmpty())
+        {
+            throw new InvalidUsageException("Name can\'t be empty", null);
+        }
+        if(availableRFIDReaderList.isEmpty())
+        {
+            throw new InvalidUsageException("Retrieve available reader lists first", null);
+        }
+        for(ReaderDevice device : availableRFIDReaderList)
+        {
+            if(device.getName().equalsIgnoreCase(name))
+            {
+                ConnectToRFIDReader(device);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public synchronized void ConnectToRFIDReader(ReaderDevice device) throws OperationFailureException, InvalidUsageException {
+        if(readerDevice != device)
+        {
+            if(reader != null && reader.isConnected())
+            {
+                reader.disconnect();
+                reader = null;
+            }
+
+            readerDevice = device;
+        }
+
+        if(reader == null)
+        {
+            reader = readerDevice.getRFIDReader();
+        }
+
+        if(reader.isConnected() == false)
+        {
+            reader.connect();
+        }
+    }
+
+    private synchronized void GetAvailableReader()
+    {
+        GetAvailableReader(true);
+    }
+
+    private synchronized void GetAvailableReader(Boolean connect) {
         Log.d(TAG, "GetAvailableReader");
         if (readers != null) {
             readers.attach(this);
             try {
                 if (readers.GetAvailableRFIDReaderList() != null) {
                     availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
-                    if (availableRFIDReaderList.size() != 0) {
-                        // if single reader is available then connect it
-                        if (availableRFIDReaderList.size() == 1) {
-                            readerDevice = availableRFIDReaderList.get(0);
-                            reader = readerDevice.getRFIDReader();
-                        } else {
-                            // search reader specified by name
-                            for (ReaderDevice device : availableRFIDReaderList) {
-                                Log.d(TAG,"device: "+device.getName());
-                                if (device.getName().contains(readerName)) {
+                    if(connect) {
+                        if (availableRFIDReaderList.size() != 0) {
+                            // if single reader is available then connect it
+                            if (availableRFIDReaderList.size() == 1) {
+                                readerDevice = availableRFIDReaderList.get(0);
+                                reader = readerDevice.getRFIDReader();
+                            } else {
+                                // search reader specified by name
+                                for (ReaderDevice device : availableRFIDReaderList) {
+                                    Log.d(TAG, "device: " + device.getName());
+                                    if (device.getName().contains(readerName)) {
 
-                                    readerDevice = device;
-                                    reader = readerDevice.getRFIDReader();
+                                        readerDevice = device;
+                                        reader = readerDevice.getRFIDReader();
 
+                                    }
                                 }
                             }
                         }

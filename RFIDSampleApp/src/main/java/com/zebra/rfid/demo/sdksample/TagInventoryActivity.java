@@ -26,6 +26,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +42,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -54,6 +56,8 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     private TextView statusTextViewRFID = null;
     private CheckBox cbReadUserMemory = null;
+    private SeekBar seekBarMinRSSI = null;
+    private TextView tvMinRSSIValue = null;
 
     private static final int BLUETOOTH_PERMISSION_REQUEST_CODE = 100;
 
@@ -67,6 +71,8 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public static boolean bAllowLocationing = true;
     public static boolean bAllowReadWrite = true;
+
+    private short mMinRSSI = -30;
 
     private boolean bReadUserMemory = false;
 
@@ -91,6 +97,25 @@ public class TagInventoryActivity extends AppCompatActivity {
         // RFID Handler
         statusTextViewRFID = (TextView) findViewById(R.id.textViewStatusrfid);
         //rfidHandler.onCreate(this);
+
+        // Min RSSI slider
+        seekBarMinRSSI = findViewById(R.id.minRSSI);
+        tvMinRSSIValue = findViewById(R.id.tvMinRSSIValue);
+        seekBarMinRSSI.setProgress(200 + mMinRSSI); // Convert -30 to progress 170
+        tvMinRSSIValue.setText(String.valueOf(mMinRSSI));
+        seekBarMinRSSI.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mMinRSSI = (short) (progress - 200);
+                tvMinRSSIValue.setText(String.valueOf(mMinRSSI));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
 
         cbReadUserMemory = findViewById(R.id.cb_ReadUserMemory);
         cbReadUserMemory.setChecked(bReadUserMemory);
@@ -360,6 +385,7 @@ public class TagInventoryActivity extends AppCompatActivity {
                 findViewById(R.id.btStartInventory).setEnabled(false);
                 findViewById(R.id.ExportTXT).setEnabled(false);
                 findViewById(R.id.btStopInventory).setEnabled(true);
+                seekBarMinRSSI.setEnabled(false);
             }
         });
         if(withMemoryBank)
@@ -374,6 +400,7 @@ public class TagInventoryActivity extends AppCompatActivity {
             @Override
             public void run() {
                 findViewById(R.id.btStartInventory).setEnabled(true);
+                seekBarMinRSSI.setEnabled(true);
                 if(mTagDataList.size() > 0) {
                     findViewById(R.id.ExportTXT).setEnabled(true);
                     findViewById(R.id.btShareTo).setEnabled(true);
@@ -493,8 +520,20 @@ public class TagInventoryActivity extends AppCompatActivity {
     public void handleTagdata(TagData[] tagData) {
         boolean notifyAllSetChanged = false;
         ArrayList<Integer> itemchanged = new ArrayList<>();
+        ArrayList<Integer> itemsToRemove = new ArrayList<>();
 
         for (int index = 0; index < tagData.length; index++) {
+            if(tagData[index].getPeakRSSI() < mMinRSSI) {
+                int tagToRemoveIndex = findEPC(tagData[index]);
+                {
+                    if(tagToRemoveIndex != -1)
+                    {
+                        // Add this tag in the list to be removed
+                        itemsToRemove.add(tagToRemoveIndex);
+                    }
+                }
+                continue;
+            }
             int tagIndex = findEPC(tagData[index]);
             if(tagIndex != -1)
             {
@@ -524,6 +563,19 @@ public class TagInventoryActivity extends AppCompatActivity {
                     }
                 });
             }
+        }
+        if(itemsToRemove.size() > 0)
+        {
+            // We need to remove the items that are out of range
+            Collections.sort(itemsToRemove, Collections.reverseOrder());
+            for (Integer index : itemsToRemove) {
+                // CRITICAL: Use intValue() to ensure you call remove(int index)
+                // and not remove(Object o), especially if your list contains Integers.
+                if (index >= 0 && index < mTagDataList.size()) {
+                    mTagDataList.remove(index.intValue());
+                }
+            }
+            notifyAllSetChanged = true;
         }
         if(notifyAllSetChanged)
         {
