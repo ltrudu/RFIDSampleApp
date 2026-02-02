@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -58,6 +60,8 @@ public class TagInventoryActivity extends AppCompatActivity {
     private CheckBox cbReadUserMemory = null;
     private SeekBar seekBarMinRSSI = null;
     private TextView tvMinRSSIValue = null;
+    private SeekBar seekBarAntennaPower = null;
+    private TextView tvAntennaPowerValue = null;
 
     private static final int BLUETOOTH_PERMISSION_REQUEST_CODE = 100;
 
@@ -108,6 +112,25 @@ public class TagInventoryActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mMinRSSI = (short) (progress - 200);
                 tvMinRSSIValue.setText(String.valueOf(mMinRSSI));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // Antenna Power slider
+        seekBarAntennaPower = findViewById(R.id.antennaPower);
+        tvAntennaPowerValue = findViewById(R.id.tvAntennaPowerValue);
+        seekBarAntennaPower.setProgress(RFIDHandler.mAntennaPower - 10); // Convert power to progress (10-270 -> 0-260)
+        tvAntennaPowerValue.setText(String.valueOf(RFIDHandler.mAntennaPower));
+        seekBarAntennaPower.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                RFIDHandler.mAntennaPower = progress + 10;
+                tvAntennaPowerValue.setText(String.valueOf(RFIDHandler.mAntennaPower));
             }
 
             @Override
@@ -309,7 +332,15 @@ public class TagInventoryActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.antenna_settings) {
-            String result = MainApplication.rfidHandler.setConfigAntenna();
+            String result = MainApplication.rfidHandler.setConfigAntenna(40);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //RFIDHandler.mAntennaPower =  40;
+                    seekBarAntennaPower.setProgress(30);
+                    //tvAntennaPowerValue.setText(String.valueOf(RFIDHandler.mAntennaPower));
+                }
+            });
             Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
             return true;
         }
@@ -386,6 +417,7 @@ public class TagInventoryActivity extends AppCompatActivity {
                 findViewById(R.id.ExportTXT).setEnabled(false);
                 findViewById(R.id.btStopInventory).setEnabled(true);
                 seekBarMinRSSI.setEnabled(false);
+                seekBarAntennaPower.setEnabled(false);
             }
         });
         if(withMemoryBank)
@@ -401,6 +433,7 @@ public class TagInventoryActivity extends AppCompatActivity {
             public void run() {
                 findViewById(R.id.btStartInventory).setEnabled(true);
                 seekBarMinRSSI.setEnabled(true);
+                seekBarAntennaPower.setEnabled(true);
                 if(mTagDataList.size() > 0) {
                     findViewById(R.id.ExportTXT).setEnabled(true);
                     findViewById(R.id.btShareTo).setEnabled(true);
@@ -518,67 +551,54 @@ public class TagInventoryActivity extends AppCompatActivity {
     }
 
     public void handleTagdata(TagData[] tagData) {
-        boolean notifyAllSetChanged = false;
-        ArrayList<Integer> itemchanged = new ArrayList<>();
-        ArrayList<Integer> itemsToRemove = new ArrayList<>();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                boolean notifyAllSetChanged = false;
+                ArrayList<Integer> itemchanged = new ArrayList<>();
 
-        for (int index = 0; index < tagData.length; index++) {
-            if(tagData[index].getPeakRSSI() < mMinRSSI) {
-                int tagToRemoveIndex = findEPC(tagData[index]);
-                {
-                    if(tagToRemoveIndex != -1)
+                for (int index = 0; index < tagData.length; index++) {
+                    int tagIndex = findEPC(tagData[index]);
+                    if(tagIndex != -1)
                     {
-                        // Add this tag in the list to be removed
-                        itemsToRemove.add(tagToRemoveIndex);
+                        mTagDataList.get(tagIndex).mTagID = tagData[index].getTagID();
+                        mTagDataList.get(tagIndex).mRssi = tagData[index].getPeakRSSI();
+                        if(tagData[index].getMemoryBankData().length() > 0) {
+                            Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
+                            Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
+                            mTagDataList.get(tagIndex).mUserMemory = tagData[index].getMemoryBankData();
+                        }
+                        itemchanged.add(index);
+                    }
+                    else
+                    {
+                        TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
+                        if(tagData[index].getMemoryBankData().length() > 0) {
+                            Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
+                            Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
+                            newData.mUserMemory = tagData[index].getMemoryBankData();
+                        }
+                        mTagDataList.add(newData);
+                        notifyAllSetChanged = true;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tvNbItems.setText(String.valueOf(mTagDataList.size()));
+                            }
+                        });
                     }
                 }
-                continue;
-            }
-            int tagIndex = findEPC(tagData[index]);
-            if(tagIndex != -1)
-            {
-                mTagDataList.get(tagIndex).mTagID = tagData[index].getTagID();
-                mTagDataList.get(tagIndex).mRssi = tagData[index].getPeakRSSI();
-                if(tagData[index].getMemoryBankData().length() > 0) {
-                    Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
-                    Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
-                    mTagDataList.get(tagIndex).mUserMemory = tagData[index].getMemoryBankData();
-                }
-                itemchanged.add(index);
-            }
-            else
-            {
-                TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
-                if(tagData[index].getMemoryBankData().length() > 0) {
-                    Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
-                    Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
-                    newData.mUserMemory = tagData[index].getMemoryBankData();
-                }
-                mTagDataList.add(newData);
-                notifyAllSetChanged = true;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        tvNbItems.setText(String.valueOf(mTagDataList.size()));
+                // Check if the elements are within the RSSI
+                boolean elementDeleted = false;
+                for(int i = mTagDataList.size()-1; i >=0 ; i--)
+                {
+                    if(mTagDataList.get(i).getRSSI() < mMinRSSI) {
+                        mTagDataList.remove(i);
+                        elementDeleted = true;
                     }
-                });
-            }
-        }
-        if(itemsToRemove.size() > 0)
-        {
-            // We need to remove the items that are out of range
-            Collections.sort(itemsToRemove, Collections.reverseOrder());
-            for (Integer index : itemsToRemove) {
-                // CRITICAL: Use intValue() to ensure you call remove(int index)
-                // and not remove(Object o), especially if your list contains Integers.
-                if (index >= 0 && index < mTagDataList.size()) {
-                    mTagDataList.remove(index.intValue());
                 }
-            }
-            notifyAllSetChanged = true;
-        }
-        if(notifyAllSetChanged)
-        {
+                if(notifyAllSetChanged || elementDeleted)
+                {
                     mTagDataRecyclerView.post(new Runnable()
                     {
                         @Override
@@ -586,13 +606,13 @@ public class TagInventoryActivity extends AppCompatActivity {
                             mTagDataAdapter.notifyDataSetChanged();
                         }
                     });
-        }
-        else
-        {
-            if(itemchanged.size() > 0)
-            {
-                for(int indexToChange : itemchanged)
+                }
+                else
                 {
+                    if(itemchanged.size() > 0)
+                    {
+                        for(int indexToChange : itemchanged)
+                        {
                             mTagDataRecyclerView.post(new Runnable()
                             {
                                 @Override
@@ -600,9 +620,11 @@ public class TagInventoryActivity extends AppCompatActivity {
                                     mTagDataAdapter.notifyItemChanged(indexToChange);
                                 }
                             });
+                        }
+                    }
                 }
             }
-        }
+        });
     }
 
     private int findEPC(TagData tagData)

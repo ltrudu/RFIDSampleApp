@@ -2,7 +2,6 @@ package com.zebra.rfid.demo.sdksample;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,7 +21,6 @@ import com.zebra.rfid.api3.RFIDReader;
 import com.zebra.rfid.api3.RFModes;
 import com.zebra.rfid.api3.ReaderDevice;
 import com.zebra.rfid.api3.Readers;
-import com.zebra.rfid.api3.RegulatoryConfig;
 import com.zebra.rfid.api3.RfidEventsListener;
 import com.zebra.rfid.api3.RfidReadEvents;
 import com.zebra.rfid.api3.RfidStatusEvents;
@@ -37,7 +35,6 @@ import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TagStorageSettings;
 import com.zebra.rfid.api3.TriggerInfo;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 
@@ -50,7 +47,8 @@ final static String TAG = "RFID_HANDLER";
     private RFIDReader reader;
     private EventHandler eventHandler;
     private Context context;
-    private int MAX_POWER = 270;
+    private static int MAX_POWER = 270;
+    public static int mAntennaPower = MAX_POWER;
 
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
     // If barcode scan is available in RFD8500, for barcode scanning change mode using mode button on RFD8500 device. By default it is set to RFID mode
@@ -80,7 +78,7 @@ final static String TAG = "RFID_HANDLER";
 // TEST BUTTON functionality
     // following two tests are to try out different configurations features
 
-    public String setConfigAntenna() {
+    public String setConfigAntenna(int powerIndex) {
         // check reader connection
         if (!isReaderConnected())
             return "Not connected";
@@ -88,7 +86,7 @@ final static String TAG = "RFID_HANDLER";
         try {
             Antennas.AntennaRfConfig config = null;
             config = reader.Config.Antennas.getAntennaRfConfig(1);
-            config.setTransmitPowerIndex(40);
+            config.setTransmitPowerIndex(powerIndex);
             config.setrfModeTableIndex(0);
             config.setTari(0);
             reader.Config.Antennas.setAntennaRfConfig(1, config);
@@ -98,7 +96,7 @@ final static String TAG = "RFID_HANDLER";
             e.printStackTrace();
             return e.getResults().toString() + " " + e.getVendorMessage();
         }
-        return "Antenna power Set to 40";
+        return "Antenna power Set to " + String.valueOf(powerIndex);
     }
 
 
@@ -131,7 +129,7 @@ final static String TAG = "RFID_HANDLER";
             // Power to 270
             Antennas.AntennaRfConfig config = null;
             config = reader.Config.Antennas.getAntennaRfConfig(1);
-            config.setTransmitPowerIndex(MAX_POWER);
+            config.setTransmitPowerIndex(mAntennaPower);
             config.setrfModeTableIndex(0);
             config.setTari(0);
             reader.Config.Antennas.setAntennaRfConfig(1, config);
@@ -517,7 +515,7 @@ final static String TAG = "RFID_HANDLER";
                     reader.Config.setStopTrigger(triggerInfo.StopTrigger);
                 }
                 // power levels are index based so maximum power supported get the last one
-                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+                mAntennaPower = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
 
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
@@ -526,7 +524,7 @@ final static String TAG = "RFID_HANDLER";
 
                 //TODO: Check documentation
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
-                config.setTransmitPowerIndex(MAX_POWER);
+                config.setTransmitPowerIndex(mAntennaPower);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
                 config.setTransmitFrequencyIndex(0);
@@ -579,10 +577,10 @@ final static String TAG = "RFID_HANDLER";
                 reader.Config.setStartTrigger(triggerInfo.StartTrigger);
                 reader.Config.setStopTrigger(triggerInfo.StopTrigger);
                 // power levels are index based so maximum power supported get the last one
-                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+                mAntennaPower = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
-                config.setTransmitPowerIndex(MAX_POWER);
+                config.setTransmitPowerIndex(mAntennaPower);
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
@@ -624,10 +622,10 @@ final static String TAG = "RFID_HANDLER";
                 reader.Config.setStartTrigger(triggerInfo.StartTrigger);
                 reader.Config.setStopTrigger(triggerInfo.StopTrigger);
                 // power levels are index based so maximum power supported get the last one
-                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+                mAntennaPower = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
                 // set antenna configurations
                 Antennas.AntennaRfConfig config = reader.Config.Antennas.getAntennaRfConfig(1);
-                config.setTransmitPowerIndex((int)(MAX_POWER*0.1)); //10% of MaxPower
+                config.setTransmitPowerIndex((int)(mAntennaPower *0.1)); //10% of MaxPower
                 config.setrfModeTableIndex(0);
                 config.setTari(0);
                 reader.Config.Antennas.setAntennaRfConfig(1, config);
@@ -1035,7 +1033,7 @@ final static String TAG = "RFID_HANDLER";
                     reader.Config.setStopTrigger(triggerInfo.StopTrigger);
                 }
                 // power levels are index based so maximum power supported get the last one
-                MAX_POWER = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
+                mAntennaPower = reader.ReaderCapabilities.getTransmitPowerLevelValues().length - 1;
 
                 // Setup tag storage settings to retrieve user memory bank
                 TagStorageSettings tagStorageSettings = new TagStorageSettings();
@@ -1049,7 +1047,7 @@ final static String TAG = "RFID_HANDLER";
 
                 //TODO: Check documentation
                 // https://techdocs.zebra.com/dcs/rfid/android/2-0-2-94/tutorials/antenna/#code1
-                config.setTransmitPowerIndex(MAX_POWER);
+                config.setTransmitPowerIndex(mAntennaPower);
                 config.setrfModeTableIndex(3);
                 config.setTari(0);
 
