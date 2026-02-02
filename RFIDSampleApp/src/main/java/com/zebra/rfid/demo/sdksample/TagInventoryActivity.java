@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -76,9 +78,20 @@ public class TagInventoryActivity extends AppCompatActivity {
     public static boolean bAllowLocationing = true;
     public static boolean bAllowReadWrite = true;
 
-    private short mMinRSSI = -30;
+    private short mMinRSSI = -40;
 
     private boolean bReadUserMemory = false;
+
+    private static final long CLEAR_LIST_TIMEOUT_MS = 2000;
+    private Handler mClearListHandler = new Handler(Looper.getMainLooper());
+    private Runnable mClearListRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mTagDataList.clear();
+            tvNbItems.setText("0");
+            mTagDataAdapter.notifyDataSetChanged();
+        }
+    };
 
     ActivityResultLauncher<Intent> resultLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -402,6 +415,7 @@ public class TagInventoryActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mClearListHandler.removeCallbacks(mClearListRunnable);
         MainApplication.rfidHandler.onDestroy();
     }
 
@@ -428,6 +442,8 @@ public class TagInventoryActivity extends AppCompatActivity {
 
     public void StopInventory(){
         MainApplication.rfidHandler.stopInventory();
+        // Cancel the clear list timer
+        mClearListHandler.removeCallbacks(mClearListRunnable);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -551,76 +567,57 @@ public class TagInventoryActivity extends AppCompatActivity {
     }
 
     public void handleTagdata(TagData[] tagData) {
+        // Reset the clear list timer
+        mClearListHandler.removeCallbacks(mClearListRunnable);
+        mClearListHandler.postDelayed(mClearListRunnable, CLEAR_LIST_TIMEOUT_MS);
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 boolean notifyAllSetChanged = false;
-                ArrayList<Integer> itemchanged = new ArrayList<>();
+                ArrayList<Integer> itemsChanged = new ArrayList<>();
 
                 for (int index = 0; index < tagData.length; index++) {
                     int tagIndex = findEPC(tagData[index]);
-                    if(tagIndex != -1)
-                    {
+                    if (tagIndex != -1) {
+                        // Update existing tag
                         mTagDataList.get(tagIndex).mTagID = tagData[index].getTagID();
                         mTagDataList.get(tagIndex).mRssi = tagData[index].getPeakRSSI();
-                        if(tagData[index].getMemoryBankData().length() > 0) {
+                        if (tagData[index].getMemoryBankData().length() > 0) {
                             Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
                             Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
                             mTagDataList.get(tagIndex).mUserMemory = tagData[index].getMemoryBankData();
                         }
-                        itemchanged.add(index);
-                    }
-                    else
-                    {
+                        itemsChanged.add(tagIndex);
+                    } else {
+                        // Add new tag
                         TagDataModel newData = new TagDataModel(tagData[index].getTagID(), tagData[index].getPeakRSSI());
-                        if(tagData[index].getMemoryBankData().length() > 0) {
+                        if (tagData[index].getMemoryBankData().length() > 0) {
                             Log.v(MainApplication.TAG, "TagID=" + tagData[index].getTagID());
                             Log.v(MainApplication.TAG, "=" + tagData[index].getMemoryBankData());
                             newData.mUserMemory = tagData[index].getMemoryBankData();
                         }
                         mTagDataList.add(newData);
                         notifyAllSetChanged = true;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvNbItems.setText(String.valueOf(mTagDataList.size()));
-                            }
-                        });
                     }
                 }
-                // Check if the elements are within the RSSI
-                boolean elementDeleted = false;
-                for(int i = mTagDataList.size()-1; i >=0 ; i--)
-                {
-                    if(mTagDataList.get(i).getRSSI() < mMinRSSI) {
+
+                // Remove tags below mMinRSSI threshold
+                for (int i = mTagDataList.size() - 1; i >= 0; i--) {
+                    if (mTagDataList.get(i).getRSSI() < mMinRSSI) {
                         mTagDataList.remove(i);
-                        elementDeleted = true;
+                        notifyAllSetChanged = true;
                     }
                 }
-                if(notifyAllSetChanged || elementDeleted)
-                {
-                    mTagDataRecyclerView.post(new Runnable()
-                    {
-                        @Override
-                        public void run() {
-                            mTagDataAdapter.notifyDataSetChanged();
-                        }
-                    });
-                }
-                else
-                {
-                    if(itemchanged.size() > 0)
-                    {
-                        for(int indexToChange : itemchanged)
-                        {
-                            mTagDataRecyclerView.post(new Runnable()
-                            {
-                                @Override
-                                public void run() {
-                                    mTagDataAdapter.notifyItemChanged(indexToChange);
-                                }
-                            });
-                        }
+
+                // Update UI - we're already on UI thread, no need for post()
+                tvNbItems.setText(String.valueOf(mTagDataList.size()));
+
+                if (notifyAllSetChanged) {
+                    mTagDataAdapter.notifyDataSetChanged();
+                } else if (itemsChanged.size() > 0) {
+                    for (int indexToChange : itemsChanged) {
+                        mTagDataAdapter.notifyItemChanged(indexToChange);
                     }
                 }
             }
